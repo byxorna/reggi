@@ -1,0 +1,10 @@
+Timestamp                       Thread     Type        Activity             PID    TTL  
+2020-12-18 02:07:09.755776-0500 0x1e9964   Activity    0x34db2              427    0    sharingd: (Contacts) FetchingContacts
+2020-12-18 02:13:49.322639-0500 0x1ea51b   Default     0x0                  497    0    CommCenter: [com.apple.CommCenter:CSIAppInfo.AppActObserver] #I handleLSNotitifcation_sync: Application exited: <private>
+2020-12-18 02:58:05.028363-0500 0x0        Timesync    0x0                  0      0    === system wallclock time adjusted
+2020-12-18 03:04:32.391042-0500 0x1e6ef1   Default     0x0                  396    0    bird: (libxpc.dylib) [com.apple.xpc.activity:Client] _xpc_activity_dispatch: beginning dispatch, activity name <private>, seqno 1
+2020-12-18 03:04:32.391051-0500 0x1e6ef1   Default     0x0                  396    0    bird: (libxpc.dylib) [com.apple.xpc.activity:Client] _xpc_activity_dispatch: <private>: found a activity with matching seqno 1
+2020-12-18 03:04:32.391152-0500 0x1e6ef1   Default     0x0                  396    0    bird: (libxpc.dylib) [com.apple.xpc.activity:Client] _xpc_activity_dispatch: lower half, activity name <private>, seqno from top half was 1
+2020-12-18 03:04:32.391166-0500 0x1e6ef1   Default     0x0                  396    0    bird: (libxpc.dylib) [com.apple.xpc.activity:Client] _xpc_activity_set_state: <private>, 2
+2020-12-18 03:04:32.393994-0500 0x1e6ef1   Default     0x0                  396    0    bird: (libxpc.dylib) [com.apple.xpc.activity:Client] __XPC_ACTIVITY_CALLING_HANDLER__: <private>, current state 2, pending state 0
+2020-12-18 03:04:32.394030-0500 0x1e6ef1   Default     0x0                  396    0    bird: (libxpc.dylib) [com.apple.xpc.activity:Client] _xpc_activity_set_state: <private>, 5
