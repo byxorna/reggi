@@ -26,6 +26,7 @@ type cli struct {
 	textView  *tview.TextView
 	infoView  *tview.TextView
 	inputView *tview.InputField
+	treeView  *tview.TreeView
 
 	inputChan chan string
 	files     []string
@@ -52,13 +53,19 @@ func New(files []string) CLI {
 			c.Application.Draw()
 		})
 
+	c.treeView = tview.NewTreeView()
+
 	c.inputView = inputView()
 
 	c.layout.AddItem(
 		tview.NewFlex().SetDirection(tview.FlexRow).
 			AddItem(c.inputView, 3, 1, true).
 			AddItem(c.infoView, 1, 1, false).
-			AddItem(c.textView, 0, 5, false), 0, 1, false).
+			AddItem(tview.NewGrid().
+				SetRows(0).
+				SetColumns(-4, -1).
+				AddItem(c.textView, 0, 0, 1, 4, 10, 10, false), 0, 5, false),
+		0, 1, false).
 		SetFullScreen(true)
 	c.Application.SetRoot(c.layout, false).SetFocus(c.inputView)
 
