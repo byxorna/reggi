@@ -16,6 +16,10 @@ const (
 	InputCompileDelay = 300 * time.Millisecond
 )
 
+var (
+	defaultRegex = regexp.MustCompile(`Enter a regex`)
+)
+
 type CLI interface {
 	Run() error
 }
@@ -26,7 +30,7 @@ type cli struct {
 	textView  *tview.TextView
 	infoView  *tview.TextView
 	inputView *tview.InputField
-	treeView  *tview.TreeView
+	fieldView *tview.TextView
 
 	inputChan chan string
 	files     []string
@@ -53,7 +57,11 @@ func New(files []string) CLI {
 			c.Application.Draw()
 		})
 
-	c.treeView = tview.NewTreeView()
+	c.fieldView = tview.NewTextView().
+		SetScrollable(true).
+		SetDynamicColors(false).
+		SetWrap(false).
+		SetRegions(false)
 
 	c.inputView = inputView()
 
@@ -61,10 +69,9 @@ func New(files []string) CLI {
 		tview.NewFlex().SetDirection(tview.FlexRow).
 			AddItem(c.inputView, 3, 1, true).
 			AddItem(c.infoView, 1, 1, false).
-			AddItem(tview.NewGrid().
-				SetRows(0).
-				SetColumns(-4, -1).
-				AddItem(c.textView, 0, 0, 1, 4, 10, 10, false), 0, 5, false),
+			AddItem(tview.NewFlex().
+				AddItem(c.textView, 0, 4, false).
+				AddItem(c.fieldView, 30, 1, false), 0, 5, false),
 		0, 1, false).
 		SetFullScreen(true)
 	c.Application.SetRoot(c.layout, false).SetFocus(c.inputView)
@@ -74,15 +81,18 @@ func New(files []string) CLI {
 		SetBorder(true)
 
 	go input.Debounce(InputCompileDelay, c.inputChan, func(txt string) {
-		re, err := regexp.Compile(txt)
-		c.UpdateInfo(txt, re, err)
-		c.Application.Draw()
+		c.UpdateView(txt)
 	})
 	// debounce keystrokes and aggregate evnts to compile regex after delay
 	c.inputView.SetChangedFunc(func(txt string) {
 		c.inputChan <- txt
 	})
 	return &c
+}
+
+func (c *cli) Run() error {
+	c.UpdateView("")
+	return c.Application.Run()
 }
 
 func inputView() *tview.InputField {
@@ -105,7 +115,7 @@ func (c *cli) loadFile(files []string) error {
 		return err
 	}
 	c.rawText = string(data)
-	c.textView.SetText(c.rawText)
+	c.HandleFilter(defaultRegex, "")
 	return nil
 }
 
