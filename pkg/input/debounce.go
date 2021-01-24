@@ -13,7 +13,7 @@ func Debounce(interval time.Duration, input chan string, cb func(arg string)) {
 		case curr = <-input:
 			timer.Reset(interval)
 		case <-timer.C:
-			if curr != "" && previtem != curr {
+			if previtem != curr {
 				cb(curr)
 				previtem = curr
 			}
