@@ -28,11 +28,11 @@ const (
 	NoCapture = -1
 )
 
-func CaptureColor(hl HighlightID) tcell.Color {
-	if hl.Capture == NoCapture {
+func CaptureColor(idx int) tcell.Color {
+	if idx == NoCapture {
 		return matchColor
 	}
-	return captureColors[hl.Capture%len(captureColors)]
+	return captureColors[idx%len(captureColors)]
 }
 
 // HighlightID is a region identifier in tview that helps

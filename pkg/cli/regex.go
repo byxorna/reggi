@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 
 	tcell "github.com/gdamore/tcell/v2"
@@ -30,7 +31,7 @@ func (c *cli) HandleFilter(re *regexp.Regexp, input string) {
 	processedText := ""
 	highlightids := []string{}
 	lines := strings.Split(c.rawText, "\n")
-	matchingCaptures := make([]map[int]string, len(lines)) // capture fields
+	matchingCaptures := map[int][]string{}
 	for lineNo, rawline := range lines {
 		if re == nil {
 			processedText += rawline + "\n"
@@ -69,15 +70,37 @@ func (c *cli) HandleFilter(re *regexp.Regexp, input string) {
 			line += string(rawline[n])
 		}
 
-		//matchingCaptures[lineNo] = captures
 		processedText += line + "\n"
+
+		// now store the captures for viewing on the right panel
+		captures := []string{}
+		for _, match := range capMatches {
+			if len(match) <= 2 {
+				continue
+			}
+			for i := 0; i < len(match)/2; i++ {
+				if i == 0 {
+					continue
+				}
+				captures = append(captures, rawline[match[2*i]:match[2*i+1]])
+			}
+		}
+		matchingCaptures[lineNo] = captures
 	}
 	c.textView.Highlight(highlightids...)
 	c.textView.SetText(processedText)
 
 	// for the fields view, for the currently selected lines, show the matches in a list
+	linesWithCaptures := make([]int, len(matchingCaptures))
+	i := 0
+	for k := range matchingCaptures {
+		linesWithCaptures[i] = k
+		i++
+	}
+	sort.Ints(linesWithCaptures)
 	txt := ""
-	for lineNo, captures := range matchingCaptures {
+	for lineNo := range linesWithCaptures {
+		captures := matchingCaptures[lineNo]
 		if len(captures) == 0 {
 			continue
 		}

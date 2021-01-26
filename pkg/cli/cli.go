@@ -47,7 +47,7 @@ func New(files []string) CLI {
 	c.Application = tview.NewApplication()
 	c.layout = tview.NewFlex()
 	c.infoView = tview.NewTextView().
-		SetScrollable(false).SetDynamicColors(true)
+		SetScrollable(false)
 
 	c.textView = tview.NewTextView().
 		SetScrollable(true).
