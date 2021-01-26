@@ -105,20 +105,26 @@ func (c *cli) loadFile(files []string) error {
 	for _, f := range files {
 		c.files = append(c.files, f)
 	}
-	activeFile, err := os.Open(c.files[c.fileidx])
-	if err != nil {
-		return err
+	if len(c.files) > 0 {
+		activeFile, err := os.Open(c.files[c.fileidx])
+		if err != nil {
+			return err
+		}
+		c.activeFile = activeFile
+		data, err := ioutil.ReadAll(c.activeFile)
+		if err != nil {
+			return err
+		}
+		c.rawText = string(data)
 	}
-	c.activeFile = activeFile
-	data, err := ioutil.ReadAll(c.activeFile)
-	if err != nil {
-		return err
-	}
-	c.rawText = string(data)
 	c.HandleFilter(defaultRegex, "")
 	return nil
 }
 
 func (c *cli) windowTitle() string {
-	return fmt.Sprintf("[%d:%d] Regview: %s (%s)", c.fileidx, len(c.files), c.activeFile.Name(), version.Version)
+	fileName := "no file"
+	if c.activeFile != nil {
+		fileName = c.activeFile.Name()
+	}
+	return fmt.Sprintf("[%d:%d] Regview: %s (%s)", c.fileidx, len(c.files), fileName, version.Version)
 }
