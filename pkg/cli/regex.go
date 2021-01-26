@@ -28,50 +28,64 @@ func (c *cli) UpdateView(txt string) {
 func (c *cli) HandleFilter(re *regexp.Regexp, input string) {
 	// populate the text view with fields highlighted
 	processedText := ""
-	highlights := []string{}
+	highlightids := []string{}
 	lines := strings.Split(c.rawText, "\n")
-	matchingFields := make([][]string, len(lines))
+	matchingCaptures := make([]map[int]string, len(lines)) // capture fields
 	for lineNo, rawline := range lines {
 		if re == nil {
-			processedText += fmt.Sprintf("%d: %s\n", lineNo, rawline)
+			processedText += rawline + "\n"
 			continue
 		}
-		matches := re.FindAllStringIndex(rawline, -1)
-		offset := 0
+		capMatches := re.FindAllStringSubmatchIndex(rawline, -1)
+		// TODO: bytesbuffer would be snappier
 		line := ""
-		fields := make([]string, len(matches))
-		for matchID, match := range matches {
-			regionID := fmt.Sprintf("%d:%d", lineNo, matchID)
-			highlights = append(highlights, regionID)
-			line += fmt.Sprintf(`%s["%s"]%s[""]`,
-				rawline[offset:match[0]],
-				regionID,
-				rawline[match[0]:match[1]])
-			offset = match[1]
 
-			fields[matchID] = rawline[match[0]:match[1]]
+		var prevHighlight string
+		var currentHighlight string
+		for n := 0; n < len(rawline); n++ {
+			prevHighlight = currentHighlight
+			currentHighlight = ""
+			for matchID, match := range capMatches {
+				for i := 0; i < len(match)/2; i++ {
+					if n >= match[i] && n < match[i+1] {
+						currentHighlight = NewHighlightID(lineNo, matchID, i).String()
+						break
+					}
+				}
+				if currentHighlight != "" {
+					break
+				}
+			}
+
+			if prevHighlight != currentHighlight {
+				if currentHighlight != "" {
+					line += fmt.Sprintf(`["%s"][blue]`, currentHighlight)
+					highlightids = append(highlightids, currentHighlight)
+				}
+				if currentHighlight == "" {
+					line += `[""][white]`
+				}
+			}
+			line += string(rawline[n])
 		}
-		matchingFields[lineNo] = fields
-		if len(matches) == 0 {
-			line = rawline
-		} else {
-			line += rawline[offset:len(rawline)]
-		}
-		processedText += fmt.Sprintf("%d: %s\n", lineNo, line)
+
+		//matchingCaptures[lineNo] = captures
+		processedText += line + "\n"
 	}
-	c.textView.Highlight(highlights...)
+	c.textView.Highlight(highlightids...)
 	c.textView.SetText(processedText)
 
 	// for the fields view, for the currently selected lines, show the matches in a list
 	txt := ""
-	for lineNo, fields := range matchingFields {
-		x := make([]string, len(fields))
-		for i, f := range fields {
+	for lineNo, captures := range matchingCaptures {
+		if len(captures) == 0 {
+			continue
+		}
+		x := make([]string, len(captures))
+		for i, f := range captures {
 			x[i] = fmt.Sprintf(" => %d: %s", i, f)
 		}
-		if len(fields) > 0 {
-			txt += fmt.Sprintf("%d:\n%s\n", lineNo, strings.Join(x, "\n"))
-		}
+		txt += fmt.Sprintf("%d:\n%s\n", lineNo, strings.Join(x, "\n"))
 	}
 	c.fieldView.SetText(txt).ScrollToBeginning()
 }

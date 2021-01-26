@@ -1,4 +1,3 @@
-Timestamp                       Thread     Type        Activity             PID    TTL  
 2020-12-18 02:07:09.755776-0500 0x1e9964   Activity    0x34db2              427    0    sharingd: (Contacts) FetchingContacts
 2020-12-18 02:13:49.322639-0500 0x1ea51b   Default     0x0                  497    0    CommCenter: [com.apple.CommCenter:CSIAppInfo.AppActObserver] #I handleLSNotitifcation_sync: Application exited: <private>
 2020-12-18 02:58:05.028363-0500 0x0        Timesync    0x0                  0      0    === system wallclock time adjusted

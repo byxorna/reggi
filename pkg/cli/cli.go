@@ -62,6 +62,7 @@ func New(files []string) CLI {
 		SetDynamicColors(false).
 		SetWrap(false).
 		SetRegions(false)
+	c.fieldView.SetBorder(true).SetTitle("Captures")
 
 	c.inputView = inputView()
 
@@ -77,8 +78,7 @@ func New(files []string) CLI {
 	c.Application.SetRoot(c.layout, false).SetFocus(c.inputView)
 
 	c.loadFile(files)
-	c.layout.SetTitle(c.windowTitle()).
-		SetBorder(true)
+	c.layout.SetTitle(c.windowTitle()).SetBorder(true)
 
 	go input.Debounce(InputCompileDelay, c.inputChan, func(txt string) {
 		c.UpdateView(txt)
