@@ -12,13 +12,11 @@ import (
 func (c *cli) UpdateView(regexInput string) {
 	if regexInput == "" {
 		c.infoView.SetText("Enter a regex").SetTextColor(tcell.ColorViolet)
-		c.HandleFilter(nil)
-		return
 	}
+
 	re, err := regexp.Compile(regexInput)
 	if err != nil {
-		c.infoView.SetText(fmt.Sprintf("%v", err)).
-			SetTextColor(tcell.ColorRed)
+		c.ShowError(err)
 	} else {
 		c.infoView.SetText(fmt.Sprintf("%+v", re)).SetTextColor(tcell.ColorTeal)
 	}
@@ -26,11 +24,18 @@ func (c *cli) UpdateView(regexInput string) {
 	c.Application.Draw()
 }
 
+func (c *cli) ShowError(err error) {
+	c.infoView.SetText(fmt.Sprintf("%v", err)).SetTextColor(tcell.ColorRed)
+}
+
 func (c *cli) HandleFilter(re *regexp.Regexp) {
+	focusedFile, _ := c.pages.GetFrontPage()
+	fv := c.fileViews[focusedFile]
+
 	// populate the text view with fields highlighted
 	processedText := ""
 	highlightids := []string{}
-	lines := strings.Split(c.rawText, "\n")
+	lines := strings.Split(fv.rawText, "\n")
 	matchingCaptures := map[int][]string{}
 	for lineNo, rawline := range lines {
 		if re == nil {
@@ -87,8 +92,8 @@ func (c *cli) HandleFilter(re *regexp.Regexp) {
 		}
 		matchingCaptures[lineNo] = captures
 	}
-	c.textView.Highlight(highlightids...)
-	c.textView.SetText(processedText)
+	fv.textView.Highlight(highlightids...)
+	fv.textView.SetText(processedText)
 
 	// for the fields view, for the currently selected lines, show the matches in a list
 	linesWithCaptures := make([]int, len(matchingCaptures))
@@ -110,5 +115,5 @@ func (c *cli) HandleFilter(re *regexp.Regexp) {
 		}
 		txt += fmt.Sprintf("%d:\n%s\n", lineNo, strings.Join(x, "\n"))
 	}
-	c.fieldView.SetText(txt).ScrollToBeginning()
+	fv.fieldView.SetText(txt).ScrollToBeginning()
 }
