@@ -24,6 +24,7 @@ func (c *cli) HandleInputCapture() {
 	windowNaviLatch := false
 	c.Application.SetInputCapture(
 		func(event *tcell.EventKey) *tcell.EventKey {
+			// handle navigation between window elements with ctrl-w + directionals
 			switch {
 			case event.Key() == tcell.KeyCtrlW:
 				windowNaviLatch = true
@@ -46,14 +47,12 @@ func (c *cli) HandleInputCapture() {
 				}
 			}
 
-			//KeyCtrlW
 			return event
 		})
 }
 
 func (c *cli) SetFocus(direction focusdir) {
-	fileName, _ := c.pages.GetFrontPage()
-	fv := c.fileViews[fileName]
+	fv := c.focusedFileView()
 	switch c.focus {
 	case FocusInput:
 		switch direction {
@@ -80,4 +79,10 @@ func (c *cli) SetFocus(direction focusdir) {
 			c.focus = FocusCaptures
 		}
 	}
+}
+
+func (c *cli) focusedFileView() *fileView {
+	focusedFile, _ := c.pages.GetFrontPage()
+	fv := c.fileViews[focusedFile]
+	return fv
 }

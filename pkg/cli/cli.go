@@ -40,13 +40,6 @@ type cli struct {
 	fileViews map[string]*fileView
 }
 
-// houses the view for a single file's contents and matches
-type fileView struct {
-	textView  *tview.TextView
-	fieldView *tview.TextView
-	rawText   string
-}
-
 func New(files []string) CLI {
 	c := cli{
 		inputChan: make(chan string),
@@ -116,32 +109,9 @@ func (c *cli) OpenFile(f string, fh io.Reader) error {
 		return err
 	}
 
-	textView := tview.NewTextView().
-		SetScrollable(true).
-		SetDynamicColors(true).
-		SetRegions(true)
-	//SetChangedFunc(func() {
-	//		c.Application.Draw()
-	//	})
-	fieldView := tview.NewTextView().
-		SetScrollable(true).
-		SetDynamicColors(false).
-		SetWrap(false).
-		SetRegions(false)
-	fieldView.SetBorder(true).SetTitle("Captures")
-
-	fv := fileView{
-		textView:  textView,
-		fieldView: fieldView,
-		rawText:   string(data),
-	}
-	p := tview.NewFlex().SetDirection(tview.FlexColumn).
-		AddItem(fv.textView, 0, 4, false).
-		AddItem(fv.fieldView, 30, 1, false)
-
-	c.fileViews[f] = &fv
-
-	c.pages.AddPage(f, p, true, false)
+	fv := NewFileView(string(data))
+	c.fileViews[f] = fv
+	c.pages.AddPage(f, fv, true, false)
 	return nil
 }
 

@@ -22,6 +22,7 @@ func (c *cli) UpdateView(regexInput string) {
 		c.infoView.SetText(fmt.Sprintf("%+v", re)).SetTextColor(tcell.ColorTeal)
 	}
 	c.HandleFilter(re)
+
 	c.Application.Draw()
 }
 
@@ -30,8 +31,7 @@ func (c *cli) ShowError(err error) {
 }
 
 func (c *cli) HandleFilter(re *regexp.Regexp) {
-	focusedFile, _ := c.pages.GetFrontPage()
-	fv := c.fileViews[focusedFile]
+	fv := c.focusedFileView()
 
 	// populate the text view with fields highlighted
 	processedText := ""
