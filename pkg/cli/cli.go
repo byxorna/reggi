@@ -35,6 +35,7 @@ type cli struct {
 	pages     *tview.Pages
 
 	inputChan chan string
+	focus     focus // what component is focused (see SetFocus())
 
 	fileViews map[string]*fileView
 }
@@ -50,6 +51,7 @@ func New(files []string) CLI {
 	c := cli{
 		inputChan: make(chan string),
 		fileViews: map[string]*fileView{},
+		focus:     FocusInput,
 	}
 	c.Application = tview.NewApplication()
 	c.layout = tview.NewFlex()
@@ -146,6 +148,7 @@ func (c *cli) OpenFile(f string, fh io.Reader) error {
 func (c *cli) Run() error {
 	// force a draw before running the app, to ensure the textview is populated
 	c.HandleFilter(defaultRegex)
+	c.HandleInputCapture()
 	return c.Application.Run()
 }
 

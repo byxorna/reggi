@@ -116,5 +116,8 @@ func (c *cli) HandleFilter(re *regexp.Regexp) {
 		}
 		txt += fmt.Sprintf("%d:\n%s\n", lineNo, strings.Join(x, "\n"))
 	}
+	if txt == "" {
+		txt = "No captures"
+	}
 	fv.fieldView.SetText(txt).ScrollToBeginning()
 }
