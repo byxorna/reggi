@@ -8,10 +8,9 @@ all: build
 .PHONY: build
 
 build:
-	go build -o bin/regtest \
-		-ldflags "-X '$(pkg)/pkg/version.Commit=$(git_commit)' -X '$(pkg)/pkg/version.Date=$(date)' -X '$(pkg)/pkg/version.Version=$(git_tag)'" \
-	./cmd/
+	@go build -o bin/regtest \
+		-ldflags "-X '$(pkg)/pkg/version.Commit=$(git_commit)' -X '$(pkg)/pkg/version.Date=$(date)' -X '$(pkg)/pkg/version.Version=$(git_tag)'" ./cmd/
 
 dev: build
-	./bin/regtest test/fixtures/mac.log
+	@./bin/regtest test/fixtures/mac.log
 

@@ -9,6 +9,7 @@ import (
 
 	"github.com/byxorna/regtest/pkg/input"
 	"github.com/byxorna/regtest/pkg/version"
+	tcell "github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
@@ -48,6 +49,8 @@ func New(files []string) CLI {
 	c.layout = tview.NewFlex()
 	c.infoView = tview.NewTextView().
 		SetScrollable(false)
+	c.infoView.SetBorderPadding(0, 0, 1, 1).
+		SetBorder(true)
 
 	c.textView = tview.NewTextView().
 		SetScrollable(true).
@@ -65,15 +68,18 @@ func New(files []string) CLI {
 	c.fieldView.SetBorder(true).SetTitle("Captures")
 
 	c.inputView = inputView()
+	c.inputView.SetBorder(true)
 
 	c.layout.AddItem(
 		tview.NewFlex().SetDirection(tview.FlexRow).
-			AddItem(c.inputView, 3, 1, true).
-			AddItem(c.infoView, 1, 1, false).
-			AddItem(tview.NewFlex().
+			AddItem(
+				// top input bits
+				tview.NewFlex().SetDirection(tview.FlexColumn).
+					AddItem(c.inputView, 0, 1, true).
+					AddItem(c.infoView, 0, 1, false), 3, 1, false).
+			AddItem(tview.NewFlex().SetDirection(tview.FlexColumn).
 				AddItem(c.textView, 0, 4, false).
-				AddItem(c.fieldView, 30, 1, false), 0, 5, false),
-		0, 1, false).
+				AddItem(c.fieldView, 30, 1, false), 0, 5, false), 0, 1, false).
 		SetFullScreen(true)
 	c.Application.SetRoot(c.layout, false).SetFocus(c.inputView)
 
@@ -97,7 +103,11 @@ func (c *cli) Run() error {
 
 func inputView() *tview.InputField {
 	f := tview.NewInputField()
-	f.SetBorder(true).SetTitle("Regex")
+	f.SetLabel("r/")
+	f.SetFieldBackgroundColor(tcell.ColorBlack).
+		SetFieldTextColor(tcell.ColorWhite).
+		SetTitle("Regex")
+	f.SetBorder(true).SetBorderPadding(0, 0, 1, 1)
 	return f
 }
 
@@ -117,7 +127,7 @@ func (c *cli) loadFile(files []string) error {
 		}
 		c.rawText = string(data)
 	}
-	c.HandleFilter(defaultRegex, "")
+	c.HandleFilter(defaultRegex)
 	return nil
 }
 

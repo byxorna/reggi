@@ -9,24 +9,24 @@ import (
 	tcell "github.com/gdamore/tcell/v2"
 )
 
-func (c *cli) UpdateView(txt string) {
-	if txt == "" {
+func (c *cli) UpdateView(regexInput string) {
+	if regexInput == "" {
 		c.infoView.SetText("Enter a regex").SetTextColor(tcell.ColorViolet)
-		c.HandleFilter(nil, txt)
+		c.HandleFilter(nil)
 		return
 	}
-	re, err := regexp.Compile(txt)
+	re, err := regexp.Compile(regexInput)
 	if err != nil {
 		c.infoView.SetText(fmt.Sprintf("%v", err)).
 			SetTextColor(tcell.ColorRed)
 	} else {
 		c.infoView.SetText(fmt.Sprintf("%+v", re)).SetTextColor(tcell.ColorTeal)
 	}
-	c.HandleFilter(re, txt)
+	c.HandleFilter(re)
 	c.Application.Draw()
 }
 
-func (c *cli) HandleFilter(re *regexp.Regexp, input string) {
+func (c *cli) HandleFilter(re *regexp.Regexp) {
 	// populate the text view with fields highlighted
 	processedText := ""
 	highlightids := []string{}
