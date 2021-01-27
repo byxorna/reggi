@@ -1,7 +1,9 @@
 package cli
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"regexp"
@@ -60,14 +62,31 @@ func New(files []string) CLI {
 	c.inputView.SetBorder(true)
 
 	c.pages = tview.NewPages()
+
 	for _, f := range files {
-		err := c.OpenFile(f)
+		fh, err := os.Open(f)
+		if err != nil {
+			c.ShowError(err)
+			continue
+		}
+		err = c.OpenFile(f, fh)
+		if err != nil {
+			c.ShowError(err)
+			continue
+		}
+	}
+	if len(files) == 0 {
+		fmt.Fprintf(os.Stderr, "Reading from stdin...\n")
+		reader := bufio.NewReader(os.Stdin)
+		err := c.OpenFile("stdin", reader)
 		if err != nil {
 			c.ShowError(err)
 		}
+		c.pages.ShowPage("stdin")
+	} else {
+		// TODO handle no file here
+		c.pages.ShowPage(files[0])
 	}
-	// TODO handle no file here
-	c.pages.ShowPage(files[0])
 
 	c.layout.AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(tview.NewFlex().SetDirection(tview.FlexColumn).
@@ -89,11 +108,7 @@ func New(files []string) CLI {
 	return &c
 }
 
-func (c *cli) OpenFile(f string) error {
-	fh, err := os.Open(f)
-	if err != nil {
-		return err
-	}
+func (c *cli) OpenFile(f string, fh io.Reader) error {
 	data, err := ioutil.ReadAll(fh)
 	if err != nil {
 		return err
@@ -129,6 +144,7 @@ func (c *cli) OpenFile(f string) error {
 }
 
 func (c *cli) Run() error {
+	// force a draw before running the app, to ensure the textview is populated
 	c.HandleFilter(defaultRegex)
 	return c.Application.Run()
 }

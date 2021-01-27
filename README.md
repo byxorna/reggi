@@ -9,3 +9,7 @@ Interactively validate regex against test data in your console
 ```
 $ make dev # opens a fixture
 ```
+
+# About
+
+I use [rubular.com](rubular.com) constantly, and wanted to make something similar that I could keep closer at hand in the console.

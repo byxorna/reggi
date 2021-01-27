@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	tcell "github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
 )
 
 func (c *cli) UpdateView(regexInput string) {
@@ -35,7 +36,7 @@ func (c *cli) HandleFilter(re *regexp.Regexp) {
 	// populate the text view with fields highlighted
 	processedText := ""
 	highlightids := []string{}
-	lines := strings.Split(fv.rawText, "\n")
+	lines := strings.Split(tview.Escape(fv.rawText), "\n")
 	matchingCaptures := map[int][]string{}
 	for lineNo, rawline := range lines {
 		if re == nil {
