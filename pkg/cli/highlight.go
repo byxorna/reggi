@@ -55,10 +55,15 @@ func NewHighlightID(linenum int, matchnum int, submatch int) *HighlightID {
 	h := HighlightID{
 		LineNum:  linenum,
 		MatchNum: matchnum,
-		Capture:  NoCapture,
 	}
-	if submatch > 0 {
-		h.Capture = submatch - 1
+	if submatch >= 0 {
+		h.Capture = submatch
+	} else {
+		h.Capture = NoCapture
 	}
 	return &h
+}
+
+func (h *HighlightID) IsCapture() bool {
+	return h.Capture != NoCapture
 }
