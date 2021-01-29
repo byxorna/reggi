@@ -42,7 +42,7 @@ type cli struct {
 
 func New(files []string) CLI {
 	c := cli{
-		inputChan: make(chan string),
+		inputChan: make(chan string, 10), // buffer input for better response and avoiding deadlocks
 		fileViews: map[string]*fileView{},
 		focus:     FocusInput,
 	}
@@ -95,11 +95,15 @@ func New(files []string) CLI {
 
 	go input.Debounce(InputCompileDelay, c.inputChan, func(txt string) {
 		c.UpdateView(txt)
+		//TODO: this should move somewhere more central
+		c.Application.Draw()
 	})
+
 	// debounce keystrokes and aggregate evnts to compile regex after delay
 	c.inputView.SetChangedFunc(func(txt string) {
 		c.inputChan <- txt
 	})
+
 	return &c
 }
 
@@ -109,16 +113,15 @@ func (c *cli) OpenFile(f string, fh io.Reader) error {
 		return err
 	}
 
-	fv := NewFileView(string(data))
+	fv := NewFileView(f, string(data))
 	c.fileViews[f] = fv
 	c.pages.AddPage(f, fv, true, false)
 	return nil
 }
 
 func (c *cli) Run() error {
-	// force a draw before running the app, to ensure the textview is populated
-	c.HandleFilter(defaultRegex)
 	c.HandleInputCapture()
+	c.UpdateView("")
 	return c.Application.Run()
 }
 
@@ -132,8 +135,13 @@ func inputView() *tview.InputField {
 	return f
 }
 
-func (c *cli) windowTitle() string {
+func (c *cli) FocusedFileView() *fileView {
 	focusedFile, _ := c.pages.GetFrontPage()
+	return c.fileViews[focusedFile]
+}
+
+func (c *cli) windowTitle() string {
+	fv := c.FocusedFileView()
 	numFiles := c.pages.GetPageCount()
-	return fmt.Sprintf("[%d] Regtest: %s (%s)", numFiles, focusedFile, version.Version)
+	return fmt.Sprintf("[%d] Regtest: %s (%s)", numFiles, fv.FileName(), version.Version)
 }

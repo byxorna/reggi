@@ -10,20 +10,22 @@ import (
 	"github.com/rivo/tview"
 )
 
-func (c *cli) UpdateView(regexInput string) {
-	if regexInput == "" {
-		c.infoView.SetText("Enter a regex").SetTextColor(tcell.ColorViolet)
-	}
+func (c *cli) UpdateView(rawRe string) {
+	compiledRe, err := regexp.Compile(rawRe)
+	c.UpdateInfoView(rawRe, compiledRe, err)
+	c.HandleFilter(compiledRe)
+}
 
-	re, err := regexp.Compile(regexInput)
-	if err != nil {
+func (c *cli) UpdateInfoView(rawRe string, compiledRe *regexp.Regexp, err error) {
+	if rawRe == "" {
+		c.infoView.SetText("Enter a regex").SetTextColor(tcell.ColorViolet)
+	} else if err != nil {
 		c.ShowError(err)
 	} else {
-		c.infoView.SetText(fmt.Sprintf("%+v", re)).SetTextColor(tcell.ColorTeal)
+		c.infoView.
+			SetText(fmt.Sprintf("Compiled: %+v (%d captures)", compiledRe, compiledRe.NumSubexp())).
+			SetTextColor(tcell.ColorTeal)
 	}
-	c.HandleFilter(re)
-
-	c.Application.Draw()
 }
 
 func (c *cli) ShowError(err error) {
@@ -112,9 +114,9 @@ func (c *cli) HandleFilter(re *regexp.Regexp) {
 		}
 		x := make([]string, len(captures))
 		for i, f := range captures {
-			x[i] = fmt.Sprintf(" => %d: %s", i, f)
+			x[i] = fmt.Sprintf("  match %d: %s", i, f)
 		}
-		txt += fmt.Sprintf("%d:\n%s\n", lineNo, strings.Join(x, "\n"))
+		txt += fmt.Sprintf("Line %d:\n%s\n", lineNo, strings.Join(x, "\n"))
 	}
 	if txt == "" {
 		txt = "No captures"

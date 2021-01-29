@@ -11,9 +11,10 @@ type fileView struct {
 	textView  *tview.TextView
 	fieldView *tview.TextView
 	rawText   string
+	fileName  string
 }
 
-func NewFileView(txt string) *fileView {
+func NewFileView(fName string, content string) *fileView {
 	textView := tview.NewTextView().
 		SetScrollable(true).
 		SetDynamicColors(true).
@@ -43,7 +44,12 @@ func NewFileView(txt string) *fileView {
 		Flex:      container,
 		textView:  textView,
 		fieldView: fieldView,
-		rawText:   txt,
+		rawText:   content,
+		fileName:  fName,
 	}
 	return &fv
+}
+
+func (fv *fileView) FileName() string {
+	return fv.fileName
 }
