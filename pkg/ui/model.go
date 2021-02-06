@@ -36,6 +36,7 @@ const (
 type Model struct {
 	ready bool
 	focus focusType
+	page  int
 
 	textInput      input.Model
 	paginationView paginator.Model
@@ -139,6 +140,15 @@ func (m Model) View() string {
 	) + "\n"
 }
 
+func (m *Model) updateViewportContents() {
+	if m.page != m.paginationView.Page {
+		m.viewport.SetContent(m.focusedFile().contents)
+		m.viewport.YOffset = 0
+		m.viewport.YPosition = 0
+		m.page = m.paginationView.Page
+	}
+}
+
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	cmds := []tea.Cmd{}
@@ -151,6 +161,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		default:
 			switch m.focus {
 			case focusPager:
+
 				sync := false
 				switch msg.String() {
 				case `q`:
@@ -170,15 +181,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.viewport.HalfViewUp()
 					sync = true
 				}
+
+				m.paginationView, cmd = m.paginationView.Update(msg)
+				if cmd != nil {
+					cmds = append(cmds, cmd)
+				}
+				m.updateViewportContents()
+
+				m.viewport, cmd = m.viewport.Update(msg)
+				cmds = append(cmds, cmd)
 				if sync && m.viewport.HighPerformanceRendering {
 					cmds = append(cmds, viewport.Sync(m.viewport))
 				}
-				m.viewport, cmd = m.viewport.Update(msg)
-				if useHighPerformanceRenderer {
-					cmds = append(cmds, cmd)
-				}
-				m.paginationView, cmd = m.paginationView.Update(msg)
-				cmds = append(cmds, cmd)
+
 			case focusInput:
 				switch msg.Type {
 				case tea.KeyCtrlC:
