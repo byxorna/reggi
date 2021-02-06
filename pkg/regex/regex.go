@@ -18,8 +18,12 @@ type Match struct {
 	Captures []Capture
 }
 
-func ProcessText(re regexp.Regexp, input string) {
+func ProcessText(re regexp.Regexp, input string) []Match {
+	return []Match{}
+}
 
+/*
+	// TODO handle multiline stuff
 	capMatches := re.FindAllStringSubmatchIndex(rawline, -1)
 	// TODO: bytesbuffer would be snappier
 	line := ""
@@ -58,3 +62,4 @@ func ProcessText(re regexp.Regexp, input string) {
 	}
 
 }
+*/

@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"regexp"
 
 	"github.com/charmbracelet/bubbles/paginator"
 	input "github.com/charmbracelet/bubbles/textinput"
@@ -16,9 +15,10 @@ var (
 	headerHeight               = 5 // TODO: this needs to be dynamic or it screws up redraw of the pager
 	footerHeight               = 1
 	useHighPerformanceRenderer = false
+)
 
-	focusedPrompt = fuchsiaFg("> ")
-	blurredPrompt = midGrayFg("> ")
+const (
+	prompt = "> "
 )
 
 type focusType int
@@ -33,11 +33,12 @@ type Model struct {
 	focus focusType
 	page  int
 
-	textInput input.Model
-	pageDots  paginator.Model
-	viewport  viewport.Model
+	previousInput string
+	textInput     input.Model
+	pageDots      paginator.Model
+	viewport      viewport.Model
 
-	regex           *regexp.Regexp
+	//	regex           *regexp.Regexp
 	err             error
 	multiline       bool
 	caseInsensitive bool
@@ -70,9 +71,9 @@ func New(files []string) (*Model, error) {
 
 	textInput := input.NewModel()
 	textInput.Placeholder = "enter a regex"
-	textInput.Prompt = focusedPrompt
 	textInput.CharLimit = 156
 	textInput.Width = 50
+	textInput.Prompt = getPrompt(true, false, false)
 	textInput.Focus()
 
 	pageDots := paginator.NewModel()
@@ -87,20 +88,38 @@ func New(files []string) (*Model, error) {
 }
 
 func (m Model) Init() tea.Cmd {
-	return input.Blink
+	return m.SetFocus(focusInput)
 }
 
-func (m Model) SetFocus(f focusType) (Model, tea.Cmd) {
+func getPrompt(focused, multiline, insensitive bool) string {
+	// prefix prompt with our indicators for mode
+	modes := ""
+	if multiline {
+		modes += "m"
+	} else {
+		modes += "s"
+	}
+	if insensitive {
+		modes += "i"
+	}
+	localPrompt := fmt.Sprintf(" %2s %s", modes, prompt)
+
+	if focused {
+		return fuchsiaFg(localPrompt)
+	}
+	return midGrayFg(localPrompt)
+}
+
+func (m *Model) SetFocus(f focusType) tea.Cmd {
 	m.focus = f
+	m.textInput.Prompt = getPrompt(m.focus == focusInput, m.multiline, m.caseInsensitive)
 	switch m.focus {
 	case focusInput:
 		m.textInput.Focus()
-		m.textInput.Prompt = focusedPrompt
-		return m, input.Blink
+		return input.Blink
 	default:
 		m.textInput.Blur()
-		m.textInput.Prompt = blurredPrompt
-		return m, nil
+		return nil
 	}
 }
 

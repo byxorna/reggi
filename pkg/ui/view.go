@@ -20,6 +20,8 @@ var (
 	}
 	inputHelp = []string{
 		`esc: pager`,
+		`ctrl+i: insensitive`,
+		`ctrl+i: multiline`,
 		`ctrl+c: quit`,
 	}
 )

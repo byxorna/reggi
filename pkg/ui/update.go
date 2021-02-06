@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/byxorna/regtest/pkg/regex"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -12,7 +13,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	cmds := []tea.Cmd{}
 
+	m.err = nil
 	switch msg := msg.(type) {
+	case error:
+		m.err = msg
+	case regexp.Regexp:
+		cmds = append(cmds, func() tea.Msg {
+			m.UpdateContent(msg)
+			return nil
+		})
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c":
@@ -26,7 +35,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case `q`:
 					return m, tea.Quit
 				case `i`, `a`, `A`, `I`, `o`, `O`:
-					return m.SetFocus(focusInput)
+					cmd := m.SetFocus(focusInput)
+					cmds = append(cmds, cmd)
 				case "home", "g":
 					m.viewport.GotoTop()
 					needSync = true
@@ -62,7 +72,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case tea.KeyCtrlC:
 					return m, tea.Quit
 				case tea.KeyEsc:
-					return m.SetFocus(focusPager)
+					cmd := m.SetFocus(focusPager)
+					cmds = append(cmds, cmd)
 				}
 				m.textInput, cmd = m.textInput.Update(msg)
 				cmds = append(cmds, cmd)
@@ -95,12 +106,20 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	// TODO: move this compilation into an async Cmd
-	m.CompileInput()
+	cmds = append(cmds, func() tea.Msg {
+		return m.CompileInput()
+	})
 
 	return m, tea.Batch(cmds...)
 }
 
-func (m *Model) CompileInput() {
+func (m *Model) CompileInput() tea.Msg {
+	currentValue := m.textInput.Value()
+	if m.previousInput == currentValue {
+		// skip compilation if no value change
+		return nil
+	}
+	m.previousInput = currentValue
 	flags := ""
 	if m.multiline {
 		flags += "m"
@@ -113,5 +132,15 @@ func (m *Model) CompileInput() {
 	if len(flags) > 0 {
 		flags = "(?" + flags + ")"
 	}
-	m.regex, m.err = regexp.Compile(fmt.Sprintf(`%s%s`, flags, m.textInput.Value()))
+	//m.regex, m.err = regexp.Compile(fmt.Sprintf(`%s%s`, flags, currentValue))
+	re, err := regexp.Compile(fmt.Sprintf(`%s%s`, flags, currentValue))
+	if err != nil {
+		return err
+	}
+	return re
+}
+
+func (m *Model) UpdateContent(re regexp.Regexp) tea.Msg {
+	regex.ProcessText(re, m.focusedFile().contents)
+	return nil
 }
