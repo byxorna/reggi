@@ -1,0 +1,5 @@
+-ab-
+-axxb-
+-abaxx-axb-axb
+-axxb-ab-
+-foo-
