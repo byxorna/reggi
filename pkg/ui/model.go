@@ -5,25 +5,20 @@ import (
 	"fmt"
 	"os"
 	"regexp"
-	"strings"
 
-	"github.com/byxorna/regtest/pkg/version"
 	"github.com/charmbracelet/bubbles/paginator"
 	input "github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
-	runewidth "github.com/mattn/go-runewidth"
-	te "github.com/muesli/termenv"
 )
 
 var (
-	headerHeight               = 4 // TODO: this needs to be dynamic or it screws up redraw of the pager
+	headerHeight               = 5 // TODO: this needs to be dynamic or it screws up redraw of the pager
 	footerHeight               = 1
 	useHighPerformanceRenderer = false
 
-	color         = te.ColorProfile().Color
-	focusedPrompt = te.String("> ").Foreground(color("205")).String()
-	blurredPrompt = "> "
+	focusedPrompt = fuchsiaFg("> ")
+	blurredPrompt = midGrayFg("> ")
 )
 
 type focusType int
@@ -109,35 +104,6 @@ func (m Model) SetFocus(f focusType) (Model, tea.Cmd) {
 
 func (m *Model) focusedFile() *inputFile {
 	return m.inputFiles[m.paginationView.Page]
-}
-
-func (m *Model) formatLineSpread(left, right string) string {
-	space := m.viewport.Width - (runewidth.StringWidth(left) + runewidth.StringWidth(right))
-	if space < 1 {
-		space = 1
-	}
-	return fmt.Sprintf(`%s%s%s`, left, strings.Repeat(" ", space), right)
-}
-
-func (m Model) View() string {
-	errStr := ""
-	if m.err != nil {
-		errStr = te.String(m.err.Error()).Foreground(color("197")).String()
-	}
-	statusLeft := fmt.Sprintf("Loaded %d files: %d", len(m.inputFiles), len(m.focusedFile().contents))
-	statusRight := fmt.Sprintf(`%s %s`, version.Version, version.Commit[0:7])
-	statusLine := m.formatLineSpread(statusLeft, statusRight)
-	return fmt.Sprintf(
-		"%s\n%s\n%s\n%s\n%s",
-		statusLine,
-		m.textInput.View(),
-		errStr,
-		m.viewport.View(),
-		m.formatLineSpread(
-			fmt.Sprintf(`%s`, m.focusedFile().source),
-			fmt.Sprintf(`%d%% %s`, int(m.viewport.ScrollPercent()*100), m.paginationView.View()),
-		),
-	) + "\n"
 }
 
 func (m *Model) updateViewportContents() {
