@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/byxorna/regtest/pkg/version"
 	"github.com/charmbracelet/bubbles/paginator"
 	input "github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -12,13 +13,21 @@ import (
 )
 
 var (
-	headerHeight               = 5
+	headerHeight               = 7 // TODO: this needs to be dynamic or it screws up redraw of the pager
 	footerHeight               = 3
-	useHighPerformanceRenderer = true
+	useHighPerformanceRenderer = false
+)
+
+type focusType int
+
+const (
+	focusInput focusType = iota
+	focusPager
 )
 
 type Model struct {
 	ready bool
+	focus focusType
 
 	textInput      input.Model
 	paginationView paginator.Model
@@ -80,16 +89,29 @@ func (m Model) Init() tea.Cmd {
 	return input.Blink
 }
 
+func (m Model) SetFocus(f focusType) (Model, tea.Cmd) {
+	m.focus = f
+	switch m.focus {
+	case focusInput:
+		m.textInput.Focus()
+		return m, input.Blink
+	default:
+		m.textInput.Blur()
+		return m, nil
+	}
+}
+
 func (m *Model) focusedContents() string {
 	return m.inputFiles[m.focusedTab].contents
 }
 
 func (m Model) View() string {
 	return fmt.Sprintf(
-		"Loaded %d files: %d %v\n\n%s\n\n%s\n%s\n%s",
+		"Loaded %d files: %d %v\n%s\n\n%s\n\n%s\n%s\n%s",
 		len(m.inputFiles),
 		len(m.focusedContents()),
 		m.inputFiles,
+		fmt.Sprintf(`Version %s (%s) Compiled %s`, version.Version, version.Commit, version.Date),
 		m.textInput.View(),
 		"(ctrl+c to quit)",
 		m.viewport.View(),
@@ -103,11 +125,34 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.Type {
-		case tea.KeyCtrlC:
+		switch msg.String() {
+		case "ctrl+c":
 			return m, tea.Quit
-		case tea.KeyEsc:
-			return m, tea.Quit
+		default:
+			switch m.focus {
+			case focusPager:
+				switch msg.String() {
+				case `i`, `a`, `A`, `I`, `o`, `O`:
+					return m.SetFocus(focusInput)
+				case "home", "g":
+					m.viewport.GotoTop()
+					if m.viewport.HighPerformanceRendering {
+						cmds = append(cmds, viewport.Sync(m.viewport))
+					}
+				case "end", "G":
+					m.viewport.GotoBottom()
+					if m.viewport.HighPerformanceRendering {
+						cmds = append(cmds, viewport.Sync(m.viewport))
+					}
+				}
+			case focusInput:
+				switch msg.Type {
+				case tea.KeyCtrlC:
+					return m, tea.Quit
+				case tea.KeyEsc:
+					return m.SetFocus(focusPager)
+				}
+			}
 		}
 	case tea.WindowSizeMsg:
 		// https://github.com/charmbracelet/bubbletea/blob/master/examples/pager/main.go#L95
