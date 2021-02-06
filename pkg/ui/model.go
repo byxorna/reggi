@@ -33,12 +33,14 @@ type Model struct {
 	focus focusType
 	page  int
 
-	textInput      input.Model
-	paginationView paginator.Model
-	viewport       viewport.Model
+	textInput input.Model
+	pageDots  paginator.Model
+	viewport  viewport.Model
 
-	regex *regexp.Regexp
-	err   error
+	regex           *regexp.Regexp
+	err             error
+	multiline       bool
+	caseInsensitive bool
 
 	inputFiles []*inputFile
 }
@@ -73,14 +75,14 @@ func New(files []string) (*Model, error) {
 	textInput.Width = 50
 	textInput.Focus()
 
-	paginationView := paginator.NewModel()
-	paginationView.TotalPages = len(inputFiles)
-	paginationView.Type = paginator.Dots
+	pageDots := paginator.NewModel()
+	pageDots.TotalPages = len(inputFiles)
+	pageDots.Type = paginator.Dots
 
 	return &Model{
-		textInput:      textInput,
-		paginationView: paginationView,
-		inputFiles:     inputFiles,
+		textInput:  textInput,
+		pageDots:   pageDots,
+		inputFiles: inputFiles,
 	}, nil
 }
 
@@ -103,14 +105,14 @@ func (m Model) SetFocus(f focusType) (Model, tea.Cmd) {
 }
 
 func (m *Model) focusedFile() *inputFile {
-	return m.inputFiles[m.paginationView.Page]
+	return m.inputFiles[m.pageDots.Page]
 }
 
 func (m *Model) updateViewportContents() {
-	if m.page != m.paginationView.Page {
+	if m.page != m.pageDots.Page {
 		m.viewport.SetContent(m.focusedFile().contents)
 		m.viewport.YOffset = 0
 		m.viewport.YPosition = 0
-		m.page = m.paginationView.Page
+		m.page = m.pageDots.Page
 	}
 }

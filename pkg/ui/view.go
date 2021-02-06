@@ -11,15 +11,15 @@ import (
 var (
 	helpJoin  = " • "
 	pagerHelp = []string{
-		`i focus input`,
-		`h,l tab`,
-		`j,k scroll`,
-		`g top`,
-		`G bottom`,
-		`q quit`,
+		`i: input`,
+		`h,l: tab`,
+		`j,k: scroll`,
+		`g: top`,
+		`G: bottom`,
+		`q: quit`,
 	}
 	inputHelp = []string{
-		`esc: focus pager`,
+		`esc: pager`,
 		`ctrl+c: quit`,
 	}
 )
@@ -34,8 +34,8 @@ func (m Model) View() string {
 		errStr,
 		m.viewport.View(),
 		m.formatLineSpread(
-			fmt.Sprintf(`[%d/%d] %s`, m.paginationView.Page, m.paginationView.TotalPages, brightGrayFg(m.focusedFile().source)), 0,
-			fmt.Sprintf(`(%s) %d%% %s`, version.Version, int(m.viewport.ScrollPercent()*100), m.paginationView.View())),
+			fmt.Sprintf(`[%d/%d] %s`, m.pageDots.Page+1, m.pageDots.TotalPages, brightGrayFg(m.focusedFile().source)), 0,
+			fmt.Sprintf(`%d%% %s (%s)`, int(m.viewport.ScrollPercent()*100), m.pageDots.View(), version.Version)),
 		m.helpLine(),
 	}, "\n") + "\n"
 }

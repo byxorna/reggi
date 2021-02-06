@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"regexp"
 
 	"github.com/charmbracelet/bubbles/viewport"
@@ -20,7 +21,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch m.focus {
 			case focusPager:
 
-				sync := false
+				needSync := false
 				switch msg.String() {
 				case `q`:
 					return m, tea.Quit
@@ -28,19 +29,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return m.SetFocus(focusInput)
 				case "home", "g":
 					m.viewport.GotoTop()
-					sync = true
+					needSync = true
 				case "end", "G":
 					m.viewport.GotoBottom()
-					sync = true
+					needSync = true
 				case "ctrl+f":
 					m.viewport.HalfViewDown()
-					sync = true
+					needSync = true
 				case "ctrl+b":
 					m.viewport.HalfViewUp()
-					sync = true
+					needSync = true
+				case "H":
+					m.pageDots.PrevPage()
+				case "L":
+					m.pageDots.NextPage()
 				}
 
-				m.paginationView, cmd = m.paginationView.Update(msg)
+				m.pageDots, cmd = m.pageDots.Update(msg)
 				if cmd != nil {
 					cmds = append(cmds, cmd)
 				}
@@ -48,7 +53,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 				m.viewport, cmd = m.viewport.Update(msg)
 				cmds = append(cmds, cmd)
-				if sync && m.viewport.HighPerformanceRendering {
+				if needSync && m.viewport.HighPerformanceRendering {
 					cmds = append(cmds, viewport.Sync(m.viewport))
 				}
 
@@ -89,7 +94,24 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	m.regex, m.err = regexp.Compile(m.textInput.Value())
+	// TODO: move this compilation into an async Cmd
+	m.CompileInput()
 
 	return m, tea.Batch(cmds...)
+}
+
+func (m *Model) CompileInput() {
+	flags := ""
+	if m.multiline {
+		flags += "m"
+	} else {
+		flags += "s"
+	}
+	if m.caseInsensitive {
+		flags += "i"
+	}
+	if len(flags) > 0 {
+		flags = "(?" + flags + ")"
+	}
+	m.regex, m.err = regexp.Compile(fmt.Sprintf(`%s%s`, flags, m.textInput.Value()))
 }
