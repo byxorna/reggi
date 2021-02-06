@@ -14,7 +14,7 @@ import (
 
 var (
 	headerHeight               = 7 // TODO: this needs to be dynamic or it screws up redraw of the pager
-	footerHeight               = 3
+	footerHeight               = 0
 	useHighPerformanceRenderer = false
 )
 
@@ -101,21 +101,22 @@ func (m Model) SetFocus(f focusType) (Model, tea.Cmd) {
 	}
 }
 
-func (m *Model) focusedContents() string {
-	return m.inputFiles[m.focusedTab].contents
+func (m *Model) focusedFile() *inputFile {
+	return m.inputFiles[m.focusedTab]
 }
 
 func (m Model) View() string {
 	return fmt.Sprintf(
-		"Loaded %d files: %d %v\n%s\n\n%s\n\n%s\n%s\n%s",
+		"Loaded %d files: %d %v\n%s\n\n%s\n\n%s\n%s\n%s %d%% %s",
 		len(m.inputFiles),
-		len(m.focusedContents()),
+		len(m.focusedFile().contents),
 		m.inputFiles,
 		fmt.Sprintf(`Version %s (%s) Compiled %s`, version.Version, version.Commit, version.Date),
 		m.textInput.View(),
 		"(ctrl+c to quit)",
 		m.viewport.View(),
-		m.paginationView.View(),
+		m.focusedFile().source,
+		int(m.viewport.ScrollPercent()*100), m.paginationView.View(),
 	) + "\n"
 }
 
@@ -131,19 +132,29 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		default:
 			switch m.focus {
 			case focusPager:
+				sync := false
 				switch msg.String() {
 				case `i`, `a`, `A`, `I`, `o`, `O`:
 					return m.SetFocus(focusInput)
 				case "home", "g":
 					m.viewport.GotoTop()
-					if m.viewport.HighPerformanceRendering {
-						cmds = append(cmds, viewport.Sync(m.viewport))
-					}
+					sync = true
 				case "end", "G":
 					m.viewport.GotoBottom()
-					if m.viewport.HighPerformanceRendering {
-						cmds = append(cmds, viewport.Sync(m.viewport))
-					}
+					sync = true
+				case "ctrl+f":
+					m.viewport.HalfViewDown()
+					sync = true
+				case "ctrl+b":
+					m.viewport.HalfViewUp()
+					sync = true
+				}
+				if sync && m.viewport.HighPerformanceRendering {
+					cmds = append(cmds, viewport.Sync(m.viewport))
+				}
+				m.viewport, cmd = m.viewport.Update(msg)
+				if useHighPerformanceRenderer {
+					cmds = append(cmds, cmd)
 				}
 			case focusInput:
 				switch msg.Type {
@@ -152,6 +163,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case tea.KeyEsc:
 					return m.SetFocus(focusPager)
 				}
+				m.textInput, cmd = m.textInput.Update(msg)
+				cmds = append(cmds, cmd)
 			}
 		}
 	case tea.WindowSizeMsg:
@@ -179,14 +192,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if useHighPerformanceRenderer {
 			cmds = append(cmds, viewport.Sync(m.viewport))
 		}
-	}
-
-	m.textInput, cmd = m.textInput.Update(msg)
-	cmds = append(cmds, cmd)
-
-	m.viewport, cmd = m.viewport.Update(msg)
-	if useHighPerformanceRenderer {
-		cmds = append(cmds, cmd)
 	}
 
 	return m, tea.Batch(cmds...)
