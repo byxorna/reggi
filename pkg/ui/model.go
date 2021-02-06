@@ -44,7 +44,6 @@ type Model struct {
 	regex *regexp.Regexp
 	err   error
 
-	focusedTab int
 	inputFiles []*inputFile
 }
 
@@ -80,11 +79,11 @@ func New(files []string) (*Model, error) {
 
 	paginationView := paginator.NewModel()
 	paginationView.TotalPages = len(inputFiles)
+	paginationView.Type = paginator.Dots
 
 	return &Model{
 		textInput:      textInput,
 		paginationView: paginationView,
-		focusedTab:     0,
 		inputFiles:     inputFiles,
 	}, nil
 }
@@ -108,7 +107,7 @@ func (m Model) SetFocus(f focusType) (Model, tea.Cmd) {
 }
 
 func (m *Model) focusedFile() *inputFile {
-	return m.inputFiles[m.focusedTab]
+	return m.inputFiles[m.paginationView.Page]
 }
 
 func (m *Model) formatLineSpread(left, right string) string {
@@ -134,7 +133,7 @@ func (m Model) View() string {
 		errStr,
 		m.viewport.View(),
 		m.formatLineSpread(
-			m.focusedFile().source,
+			fmt.Sprintf(`%s`, m.focusedFile().source),
 			fmt.Sprintf(`%d%% %s`, int(m.viewport.ScrollPercent()*100), m.paginationView.View()),
 		),
 	) + "\n"
@@ -154,6 +153,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case focusPager:
 				sync := false
 				switch msg.String() {
+				case `q`:
+					return m, tea.Quit
 				case `i`, `a`, `A`, `I`, `o`, `O`:
 					return m.SetFocus(focusInput)
 				case "home", "g":
@@ -176,6 +177,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if useHighPerformanceRenderer {
 					cmds = append(cmds, cmd)
 				}
+				m.paginationView, cmd = m.paginationView.Update(msg)
+				cmds = append(cmds, cmd)
 			case focusInput:
 				switch msg.Type {
 				case tea.KeyCtrlC:
@@ -201,7 +204,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.viewport = viewport.Model{Width: msg.Width, Height: msg.Height - verticalMargins}
 			m.viewport.YPosition = headerHeight
 			m.viewport.HighPerformanceRendering = useHighPerformanceRenderer
-			m.viewport.SetContent(m.inputFiles[m.focusedTab].contents)
+			m.viewport.SetContent(m.focusedFile().contents)
 			m.ready = true
 		} else {
 			m.viewport.Width = msg.Width
