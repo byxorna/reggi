@@ -95,19 +95,23 @@ func getPrompt(focused, multiline, insensitive bool) string {
 	// prefix prompt with our indicators for mode
 	modes := ""
 	if multiline {
-		modes += "m"
+		modes += redFg("m")
+		modes += darkGrayFg("s")
 	} else {
-		modes += "s"
+		modes += darkGrayFg("m")
+		modes += greenFg("s")
 	}
 	if insensitive {
-		modes += "i"
+		modes += yellowFg("i")
+	} else {
+		modes += darkGrayFg("i")
 	}
-	localPrompt := fmt.Sprintf(" %2s %s", modes, prompt)
+	localPrompt := fmt.Sprintf(" %4s ", modes)
 
 	if focused {
-		return fuchsiaFg(localPrompt)
+		return localPrompt + fuchsiaFg(prompt)
 	}
-	return midGrayFg(localPrompt)
+	return localPrompt + midGrayFg(prompt)
 }
 
 func (m *Model) SetFocus(f focusType) tea.Cmd {

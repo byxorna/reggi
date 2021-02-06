@@ -69,6 +69,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			case focusInput:
 				switch msg.Type {
+				case tea.KeyCtrlI:
+					m.caseInsensitive = !m.caseInsensitive
+					m.UpdatePrompt()
+				case tea.KeyCtrlM:
+					m.multiline = !m.multiline
+					m.UpdatePrompt()
 				case tea.KeyCtrlC:
 					return m, tea.Quit
 				case tea.KeyEsc:
@@ -143,4 +149,7 @@ func (m *Model) CompileInput() tea.Msg {
 func (m *Model) UpdateContent(re regexp.Regexp) tea.Msg {
 	regex.ProcessText(re, m.focusedFile().contents)
 	return nil
+}
+func (m *Model) UpdatePrompt() {
+	m.textInput.Prompt = getPrompt(m.focus == focusInput, m.multiline, m.caseInsensitive)
 }
