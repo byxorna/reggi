@@ -4,18 +4,26 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"regexp"
+	"strings"
 
 	"github.com/byxorna/regtest/pkg/version"
 	"github.com/charmbracelet/bubbles/paginator"
 	input "github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	runewidth "github.com/mattn/go-runewidth"
+	te "github.com/muesli/termenv"
 )
 
 var (
-	headerHeight               = 7 // TODO: this needs to be dynamic or it screws up redraw of the pager
-	footerHeight               = 0
+	headerHeight               = 4 // TODO: this needs to be dynamic or it screws up redraw of the pager
+	footerHeight               = 1
 	useHighPerformanceRenderer = false
+
+	color         = te.ColorProfile().Color
+	focusedPrompt = te.String("> ").Foreground(color("205")).String()
+	blurredPrompt = "> "
 )
 
 type focusType int
@@ -32,7 +40,9 @@ type Model struct {
 	textInput      input.Model
 	paginationView paginator.Model
 	viewport       viewport.Model
-	err            error
+
+	regex *regexp.Regexp
+	err   error
 
 	focusedTab int
 	inputFiles []*inputFile
@@ -63,19 +73,13 @@ func New(files []string) (*Model, error) {
 
 	textInput := input.NewModel()
 	textInput.Placeholder = "enter a regex"
+	textInput.Prompt = focusedPrompt
 	textInput.CharLimit = 156
 	textInput.Width = 50
 	textInput.Focus()
 
 	paginationView := paginator.NewModel()
 	paginationView.TotalPages = len(inputFiles)
-
-	//vp := viewport.Model{
-	//	YOffset: 0,
-	//	//Height:                   10,
-	//	HighPerformanceRendering: false,
-	//}
-	//vp.SetContent("testing\nhello\n")
 
 	return &Model{
 		textInput:      textInput,
@@ -94,9 +98,11 @@ func (m Model) SetFocus(f focusType) (Model, tea.Cmd) {
 	switch m.focus {
 	case focusInput:
 		m.textInput.Focus()
+		m.textInput.Prompt = focusedPrompt
 		return m, input.Blink
 	default:
 		m.textInput.Blur()
+		m.textInput.Prompt = blurredPrompt
 		return m, nil
 	}
 }
@@ -105,18 +111,32 @@ func (m *Model) focusedFile() *inputFile {
 	return m.inputFiles[m.focusedTab]
 }
 
+func (m *Model) formatLineSpread(left, right string) string {
+	space := m.viewport.Width - (runewidth.StringWidth(left) + runewidth.StringWidth(right))
+	if space < 1 {
+		space = 1
+	}
+	return fmt.Sprintf(`%s%s%s`, left, strings.Repeat(" ", space), right)
+}
+
 func (m Model) View() string {
+	errStr := ""
+	if m.err != nil {
+		errStr = te.String(m.err.Error()).Foreground(color("197")).String()
+	}
+	statusLeft := fmt.Sprintf("Loaded %d files: %d", len(m.inputFiles), len(m.focusedFile().contents))
+	statusRight := fmt.Sprintf(`%s %s`, version.Version, version.Commit[0:7])
+	statusLine := m.formatLineSpread(statusLeft, statusRight)
 	return fmt.Sprintf(
-		"Loaded %d files: %d %v\n%s\n\n%s\n\n%s\n%s\n%s %d%% %s",
-		len(m.inputFiles),
-		len(m.focusedFile().contents),
-		m.inputFiles,
-		fmt.Sprintf(`Version %s (%s) Compiled %s`, version.Version, version.Commit, version.Date),
+		"%s\n%s\n%s\n%s\n%s",
+		statusLine,
 		m.textInput.View(),
-		"(ctrl+c to quit)",
+		errStr,
 		m.viewport.View(),
-		m.focusedFile().source,
-		int(m.viewport.ScrollPercent()*100), m.paginationView.View(),
+		m.formatLineSpread(
+			m.focusedFile().source,
+			fmt.Sprintf(`%d%% %s`, int(m.viewport.ScrollPercent()*100), m.paginationView.View()),
+		),
 	) + "\n"
 }
 
@@ -172,7 +192,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// We've reveived terminal dimensions, either for the first time or
 		// after a resize
 		verticalMargins := headerHeight + footerHeight
-
 		if !m.ready {
 			// Since this program is using the full size of the viewport we need
 			// to wait until we've received the window dimensions before we
@@ -193,6 +212,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, viewport.Sync(m.viewport))
 		}
 	}
+
+	m.regex, m.err = regexp.Compile(m.textInput.Value())
 
 	return m, tea.Batch(cmds...)
 }
