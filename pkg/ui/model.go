@@ -70,7 +70,7 @@ func New(files []string) (*Model, error) {
 	}
 
 	textInput := input.NewModel()
-	textInput.Placeholder = "enter a regex"
+	textInput.Placeholder = "enter a regex (https://golang.org/pkg/regexp/syntax/)"
 	textInput.CharLimit = 156
 	textInput.Width = 50
 	textInput.Prompt = getPrompt(true, false, false)
