@@ -44,6 +44,8 @@ var (
 	dullYellowFg = newFgStyle(lib.NewColorPair("#9BA92F", "#6BCB94")) // renders light green on light backgrounds
 	redFg        = newFgStyle(lib.Red)
 	faintRedFg   = newFgStyle(lib.FaintRed)
+
+	highlightStyle = newStyle(lib.NewColorPair("#dddddd", "#1a1a1a"), lib.NewColorPair("#04B575", "#04B575"), false)
 )
 
 // Returns a termenv style with foreground and background options.

@@ -152,6 +152,12 @@ func (m *Model) HandleInput() (shouldUpdate bool) {
 		return false
 	}
 	m.previousInput = currentValue
+	// dont process empty regex
+	if currentValue == "" {
+		m.re = nil
+		m.err = nil
+		return true
+	}
 	flags := ""
 	if m.multiline {
 		flags += "m"

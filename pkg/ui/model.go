@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/byxorna/regtest/pkg/regex"
@@ -146,12 +147,41 @@ func (m *Model) focusedFile() *inputFile {
 
 func (m *Model) getHighlightedFileContents() string {
 	c := m.inputFiles[m.pageDots.Page].contents
-	if m.re != nil {
-		// TODO: highlight text and return that if appropriate
-		m.lineMatches = regex.ProcessText(m.re, c)
+	m.lineMatches = regex.ExtractMatches(m.re, c)
+	if len(m.lineMatches) == 0 {
 		return c
 	}
-	return c
+
+	// highlight text and return that
+	highlightedText := ""
+	lmIdx := 0
+	for lineNum, line := range strings.Split(c, "\n") {
+		if len(m.lineMatches) > lmIdx && m.lineMatches[lmIdx].LineNum == lineNum {
+			lm := m.lineMatches[lmIdx]
+			hl := ""
+			hl += fmt.Sprintf("%+v\n", lm)
+			rem := line
+			for _, m := range lm.Matches {
+				splits := strings.SplitN(rem, m, 2)
+				switch len(splits) {
+				case 0:
+					hl += rem
+				case 1:
+					hl += m
+					rem = ""
+				default:
+					hl += splits[0] + highlightStyle(m)
+					rem = splits[1]
+				}
+
+			}
+			highlightedText += hl + rem + "\n"
+		} else {
+			// take line as is - no matches
+			highlightedText += line + "\n"
+		}
+	}
+	return highlightedText
 }
 
 func (m *Model) updateViewportContents() {

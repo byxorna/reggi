@@ -21,8 +21,15 @@ type LineMatches struct {
 	Matches  []string
 }
 
-func ProcessText(re *regexp.Regexp, input string) []LineMatches {
+// from https://golang.org/pkg/regexp/#Regexp.FindAllStringSubmatch
+// If 'Submatch' is present, the return value is a slice identifying the successive submatches of the expression. Submatches are matches of parenthesized subexpressions (also known as capturing groups) within the regular expression, numbered from left to right in order of opening parenthesis. Submatch 0 is the match of the entire expression, submatch 1 the match of the first parenthesized subexpression, and so on.
+// If 'Index' is present, matches and submatches are identified by byte index pairs within the input string: result[2*n:2*n+1] identifies the indexes of the nth submatch. The pair for n==0 identifies the match of the entire expression. If 'Index' is not present, the match is identified by the text of the match/submatch. If an index is negative or text is nil, it means that subexpression did not match any string in the input. For 'String' versions an empty string means either no match or an empty match.
+
+func ExtractMatches(re *regexp.Regexp, input string) []LineMatches {
 	results := []LineMatches{}
+	if re == nil {
+		return results
+	}
 	for lineNum, line := range strings.Split(input, "\n") {
 		// TODO handle multiline
 		m := re.FindAllString(line, -1)
@@ -32,7 +39,7 @@ func ProcessText(re *regexp.Regexp, input string) []LineMatches {
 		}
 		match := LineMatches{
 			LineNum: lineNum,
-			RawText: line,
+			//RawText: line,
 			Matches: m,
 		}
 
