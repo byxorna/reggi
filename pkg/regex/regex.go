@@ -2,24 +2,44 @@ package regex
 
 import (
 	"regexp"
+	"strings"
 )
 
 type Capture struct {
-	Index int
-	ID    string
-	Value string
+	Index   int
+	Name    string
+	Extract string
 }
 
-type Match struct {
+type LineMatches struct {
 	LineNum int
+	// RawText is the full text that was matched against
 	RawText string
 	// Coptures match the capture ID (number, or perl-style named capture)
 	// to the text capturing it
 	Captures []Capture
+	Matches  []string
 }
 
-func ProcessText(re regexp.Regexp, input string) []Match {
-	return []Match{}
+func ProcessText(re *regexp.Regexp, input string) []LineMatches {
+	results := []LineMatches{}
+	for lineNum, line := range strings.Split("\n", input) {
+		// TODO handle multiline
+		m := re.FindAllString(line, -1)
+		if m == nil || len(m) == 0 {
+			// nil means no matches
+			continue
+		}
+		match := LineMatches{
+			LineNum: lineNum,
+			RawText: line,
+			Matches: m,
+		}
+
+		// TODO handle captures with capMatches := re.FindAllStringSubmatch(line, -1)
+		results = append(results, match)
+	}
+	return results
 }
 
 /*

@@ -4,8 +4,10 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"regexp"
 	"time"
 
+	"github.com/byxorna/regtest/pkg/regex"
 	"github.com/charmbracelet/bubbles/paginator"
 	input "github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -43,12 +45,14 @@ type Model struct {
 	pageDots      paginator.Model
 	viewport      viewport.Model
 
-	//	regex           *regexp.Regexp
+	re         *regexp.Regexp
 	err        error
 	info       string
 	updateTime time.Time
 
 	inputFiles []*inputFile
+
+	lineMatches []regex.LineMatches
 }
 
 func New(files []string) (*Model, error) {
@@ -140,9 +144,19 @@ func (m *Model) focusedFile() *inputFile {
 	return m.inputFiles[m.pageDots.Page]
 }
 
+func (m *Model) getHighlightedFileContents() string {
+	c := m.inputFiles[m.pageDots.Page].contents
+	// TODO: highlight text and return that if appropriate
+	//if m.re != nil {
+	//	m.lineMatches = regex.ProcessText(m.re, c)
+	//	return fmt.Sprintf("%+v", m.lineMatches) + c
+	//}
+	return c
+}
+
 func (m *Model) updateViewportContents() {
 	if m.page != m.pageDots.Page {
-		m.viewport.SetContent(m.focusedFile().contents)
+		m.viewport.SetContent(m.getHighlightedFileContents())
 		m.viewport.YOffset = 0
 		m.viewport.YPosition = 0
 		m.page = m.pageDots.Page
