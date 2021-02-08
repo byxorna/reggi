@@ -12,8 +12,8 @@ import (
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	cmds := []tea.Cmd{}
-
-	needsViewportUpdate := false
+	var lines []string // lines that change in viewport
+	viewportUpdated := false
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -27,33 +27,55 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case `q`:
 					return m, tea.Quit
 				case `i`, `a`, `A`, `I`, `o`, `O`:
-					cmd := m.SetFocus(focusInput)
-					cmds = append(cmds, cmd)
+					cmd = m.SetFocus(focusInput)
 				case "home", "g":
-					m.viewport.GotoTop()
-					needsViewportUpdate = true
+					viewportUpdated = true
+					lines = m.viewport.GotoTop()
+					if m.viewport.HighPerformanceRendering {
+						cmds = append(cmds, viewport.ViewUp(m.viewport, lines))
+					}
 				case "end", "G":
-					m.viewport.GotoBottom()
-					needsViewportUpdate = true
+					viewportUpdated = true
+					lines = m.viewport.GotoBottom()
+					if m.viewport.HighPerformanceRendering {
+						cmds = append(cmds, viewport.ViewDown(m.viewport, lines))
+					}
 				case "ctrl+f":
-					m.viewport.HalfViewDown()
-					needsViewportUpdate = true
+					viewportUpdated = true
+					lines = m.viewport.HalfViewDown()
+					if m.viewport.HighPerformanceRendering {
+						cmds = append(cmds, viewport.ViewDown(m.viewport, lines))
+					}
 				case "ctrl+b":
-					m.viewport.HalfViewUp()
-					needsViewportUpdate = true
+					viewportUpdated = true
+					lines = m.viewport.HalfViewUp()
+					if m.viewport.HighPerformanceRendering {
+						cmds = append(cmds, viewport.ViewUp(m.viewport, lines))
+					}
+				case "down", "j":
+					viewportUpdated = true
+					lines = m.viewport.LineDown(1)
+					if m.viewport.HighPerformanceRendering {
+						cmds = append(cmds, viewport.ViewDown(m.viewport, lines))
+					}
+				case "up", "k":
+					viewportUpdated = true
+					lines = m.viewport.LineUp(1)
+					if m.viewport.HighPerformanceRendering {
+						cmds = append(cmds, viewport.ViewUp(m.viewport, lines))
+					}
 				case "H":
+					viewportUpdated = true
 					m.pageDots.PrevPage()
-					needsViewportUpdate = true
+					m.pageDots, cmd = m.pageDots.Update(msg)
+					cmds = append(cmds, cmd)
 					m.SetInfo("Tab " + indigoFg(m.focusedFile().source))
 				case "L":
+					viewportUpdated = true
 					m.pageDots.NextPage()
-					needsViewportUpdate = true
-					m.SetInfo("Tab " + indigoFg(m.focusedFile().source))
-				}
-
-				m.pageDots, cmd = m.pageDots.Update(msg)
-				if cmd != nil {
+					m.pageDots, cmd = m.pageDots.Update(msg)
 					cmds = append(cmds, cmd)
+					m.SetInfo("Tab " + indigoFg(m.focusedFile().source))
 				}
 
 			case focusInput:
@@ -116,10 +138,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	shouldUpdate := m.HandleInput()
 	m.HandleUpdateTime()
 
-	if needsViewportUpdate || shouldUpdate {
+	if shouldUpdate || viewportUpdated {
 		m.updateViewportContents()
-		m.viewport, cmd = m.viewport.Update(msg)
-		cmds = append(cmds, cmd)
+		//m.viewport, cmd = m.viewport.Update(msg)
+		//cmds = append(cmds, cmd)
 		if m.viewport.HighPerformanceRendering {
 			cmds = append(cmds, viewport.Sync(m.viewport))
 		}

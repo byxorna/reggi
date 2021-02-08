@@ -151,6 +151,7 @@ func (m *Model) getHighlightedFileContents() string {
 	//	m.lineMatches = regex.ProcessText(m.re, c)
 	//	return fmt.Sprintf("%+v", m.lineMatches) + c
 	//}
+	//return fmt.Sprintf("hello world %+v", m.lineMatches)
 	return c
 }
 
