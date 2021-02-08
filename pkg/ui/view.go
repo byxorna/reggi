@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/byxorna/regtest/pkg/version"
+	"github.com/charmbracelet/bubbles/viewport"
 	runewidth "github.com/mattn/go-runewidth"
 )
 
@@ -66,4 +67,21 @@ func (m *Model) helpLine() string {
 		mode = greenFg("Pager")
 	}
 	return m.formatLineSpread(h, 0, mode)
+}
+
+func (m *Model) resizeViewport(width, height int) bool {
+	verticalMargins := headerHeight + footerHeight
+	m.viewport.Width = width
+	m.viewport.Height = height - verticalMargins
+	return true
+}
+
+func (m *Model) initializeViewport(width, height int) bool {
+	verticalMargins := headerHeight + footerHeight
+	m.viewport = viewport.Model{Width: width, Height: height - verticalMargins}
+	m.viewport.YPosition = headerHeight
+	m.viewport.HighPerformanceRendering = useHighPerformanceRenderer
+	m.viewport.SetContent(m.getHighlightedFileContents())
+	m.ready = true
+	return true
 }

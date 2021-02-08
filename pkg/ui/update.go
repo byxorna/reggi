@@ -22,7 +22,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		default:
 			switch m.focus {
 			case focusPager:
-
 				switch msg.String() {
 				case `q`:
 					return m, tea.Quit
@@ -111,21 +110,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// https://github.com/charmbracelet/bubbletea/blob/master/examples/pager/main.go#L95
 		// We've reveived terminal dimensions, either for the first time or
 		// after a resize
-		verticalMargins := headerHeight + footerHeight
 		if !m.ready {
 			// Since this program is using the full size of the viewport we need
 			// to wait until we've received the window dimensions before we
 			// can initialize the viewport. The initial dimensions come in
 			// quickly, though asynchronously, which is why we wait for them
 			// here.
-			m.viewport = viewport.Model{Width: msg.Width, Height: msg.Height - verticalMargins}
-			m.viewport.YPosition = headerHeight
-			m.viewport.HighPerformanceRendering = useHighPerformanceRenderer
-			m.viewport.SetContent(m.focusedFile().contents)
-			m.ready = true
+			viewportUpdated = m.initializeViewport(msg.Width, msg.Height)
 		} else {
-			m.viewport.Width = msg.Width
-			m.viewport.Height = msg.Height - verticalMargins
+			viewportUpdated = m.resizeViewport(msg.Width, msg.Height)
 		}
 
 		if useHighPerformanceRenderer {
@@ -136,16 +129,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// this handling needs to by synchronous because it modifies application state
 	// and we cannot defer this to a Cmd
 	shouldUpdate := m.HandleInput()
-	m.HandleUpdateTime()
 
 	if shouldUpdate || viewportUpdated {
 		m.updateViewportContents()
-		//m.viewport, cmd = m.viewport.Update(msg)
-		//cmds = append(cmds, cmd)
 		if m.viewport.HighPerformanceRendering {
 			cmds = append(cmds, viewport.Sync(m.viewport))
 		}
 	}
+	m.HandleUpdateTime()
 
 	return m, tea.Batch(cmds...)
 }

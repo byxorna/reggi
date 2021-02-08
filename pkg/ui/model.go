@@ -146,22 +146,21 @@ func (m *Model) focusedFile() *inputFile {
 
 func (m *Model) getHighlightedFileContents() string {
 	c := m.inputFiles[m.pageDots.Page].contents
-	// TODO: highlight text and return that if appropriate
-	//if m.re != nil {
-	//	m.lineMatches = regex.ProcessText(m.re, c)
-	//	return fmt.Sprintf("%+v", m.lineMatches) + c
-	//}
-	//return fmt.Sprintf("hello world %+v", m.lineMatches)
+	if m.re != nil {
+		// TODO: highlight text and return that if appropriate
+		m.lineMatches = regex.ProcessText(m.re, c)
+		return c
+	}
 	return c
 }
 
 func (m *Model) updateViewportContents() {
-	if m.page != m.pageDots.Page {
-		m.viewport.SetContent(m.getHighlightedFileContents())
-		m.viewport.YOffset = 0
-		m.viewport.YPosition = 0
-		m.page = m.pageDots.Page
-	}
+	//if m.page != m.pageDots.Page {
+	m.viewport.SetContent(m.getHighlightedFileContents())
+	m.viewport.YOffset = 0
+	m.viewport.YPosition = 0
+	m.page = m.pageDots.Page
+	//}
 }
 
 func (m *Model) SetInfo(info string) {

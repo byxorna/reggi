@@ -23,7 +23,7 @@ type LineMatches struct {
 
 func ProcessText(re *regexp.Regexp, input string) []LineMatches {
 	results := []LineMatches{}
-	for lineNum, line := range strings.Split("\n", input) {
+	for lineNum, line := range strings.Split(input, "\n") {
 		// TODO handle multiline
 		m := re.FindAllString(line, -1)
 		if m == nil || len(m) == 0 {
