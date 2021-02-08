@@ -27,13 +27,15 @@ var (
 )
 
 func (m Model) View() string {
-	errStr := ""
+	infoField := ""
 	if m.err != nil {
-		errStr = redFg(m.err.Error())
+		infoField = redFg(m.err.Error())
+	} else if m.info != "" {
+		infoField = m.info
 	}
 	return "\n" + strings.Join([]string{
 		m.textInput.View(),
-		errStr,
+		infoField,
 		m.viewport.View(),
 		m.formatLineSpread(
 			fmt.Sprintf(`[%d/%d] %s`, m.pageDots.Page+1, m.pageDots.TotalPages, brightGrayFg(m.focusedFile().source)), 0,

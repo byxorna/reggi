@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"regexp"
+	"time"
 
 	"github.com/byxorna/regtest/pkg/regex"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -51,8 +52,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					needSync = true
 				case "H":
 					m.pageDots.PrevPage()
+					m.SetInfo("Tab " + indigoFg(m.focusedFile().source))
 				case "L":
 					m.pageDots.NextPage()
+					m.SetInfo("Tab " + indigoFg(m.focusedFile().source))
 				}
 
 				m.pageDots, cmd = m.pageDots.Update(msg)
@@ -71,9 +74,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				switch msg.Type {
 				case tea.KeyCtrlI:
 					m.caseInsensitive = !m.caseInsensitive
+					en := "enabled"
+					if !m.caseInsensitive {
+						en = "disabled"
+					}
+					m.SetInfo("Case insensitive matching " + yellowFg(en))
 					m.UpdatePrompt()
 				case tea.KeyCtrlM:
 					m.multiline = !m.multiline
+					en := greenFg("single line")
+					if m.multiline {
+						en = redFg("multiline")
+					}
+					m.SetInfo("Matching set to " + en)
 					m.UpdatePrompt()
 				case tea.KeyCtrlC:
 					return m, tea.Quit
@@ -116,6 +129,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.CompileInput()
 	})
 
+	m.HandleUpdateTime()
+
 	return m, tea.Batch(cmds...)
 }
 
@@ -150,6 +165,13 @@ func (m *Model) UpdateContent(re regexp.Regexp) tea.Msg {
 	regex.ProcessText(re, m.focusedFile().contents)
 	return nil
 }
+
 func (m *Model) UpdatePrompt() {
 	m.textInput.Prompt = getPrompt(m.focus == focusInput, m.multiline, m.caseInsensitive)
+}
+
+func (m *Model) HandleUpdateTime() {
+	if time.Since(m.updateTime) > infoClearDuration {
+		m.info = ""
+	}
 }

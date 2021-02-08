@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/charmbracelet/bubbles/paginator"
 	input "github.com/charmbracelet/bubbles/textinput"
@@ -15,6 +16,8 @@ var (
 	headerHeight               = 5 // TODO: this needs to be dynamic or it screws up redraw of the pager
 	footerHeight               = 1
 	useHighPerformanceRenderer = false
+
+	infoClearDuration = 4 * time.Second
 )
 
 const (
@@ -29,9 +32,11 @@ const (
 )
 
 type Model struct {
-	ready bool
-	focus focusType
-	page  int
+	ready           bool
+	focus           focusType
+	page            int
+	multiline       bool
+	caseInsensitive bool
 
 	previousInput string
 	textInput     input.Model
@@ -39,9 +44,9 @@ type Model struct {
 	viewport      viewport.Model
 
 	//	regex           *regexp.Regexp
-	err             error
-	multiline       bool
-	caseInsensitive bool
+	err        error
+	info       string
+	updateTime time.Time
 
 	inputFiles []*inputFile
 }
@@ -84,6 +89,7 @@ func New(files []string) (*Model, error) {
 		textInput:  textInput,
 		pageDots:   pageDots,
 		inputFiles: inputFiles,
+		updateTime: time.Now(),
 	}, nil
 }
 
@@ -117,12 +123,15 @@ func getPrompt(focused, multiline, insensitive bool) string {
 func (m *Model) SetFocus(f focusType) tea.Cmd {
 	m.focus = f
 	m.textInput.Prompt = getPrompt(m.focus == focusInput, m.multiline, m.caseInsensitive)
+
 	switch m.focus {
 	case focusInput:
 		m.textInput.Focus()
+		m.SetInfo("Focus: " + fuchsiaFg("input"))
 		return input.Blink
 	default:
 		m.textInput.Blur()
+		m.SetInfo("Focus: " + greenFg("pager"))
 		return nil
 	}
 }
@@ -138,4 +147,9 @@ func (m *Model) updateViewportContents() {
 		m.viewport.YPosition = 0
 		m.page = m.pageDots.Page
 	}
+}
+
+func (m *Model) SetInfo(info string) {
+	m.updateTime = time.Now()
+	m.info = info
 }
