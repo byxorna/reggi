@@ -34,15 +34,15 @@ func (m Model) View() string {
 	} else if m.info != "" {
 		infoField = m.info
 	}
-	return "\n" + strings.Join([]string{
-		m.textInput.View(),
+	return strings.Join([]string{
+		"\n" + m.textInput.View(),
 		infoField,
 		m.viewport.View(),
 		m.formatLineSpread(
 			fmt.Sprintf(`[%d/%d] %s`, m.pageDots.Page+1, m.pageDots.TotalPages, brightGrayFg(m.focusedFile().source)), 0,
 			fmt.Sprintf(`%d%% %s (%s)`, int(m.viewport.ScrollPercent()*100), m.pageDots.View(), version.Version)),
 		m.helpLine(),
-	}, "\n") + "\n"
+	}, "\n")
 }
 
 func (m *Model) formatLineSpread(left string, extraSpace int, right string) string {

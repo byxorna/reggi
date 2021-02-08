@@ -15,11 +15,11 @@ import (
 )
 
 var (
-	headerHeight               = 5 // TODO: this needs to be dynamic or it screws up redraw of the pager
-	footerHeight               = 1
-	useHighPerformanceRenderer = false
+	headerHeight               = 3 // TODO: this needs to be dynamic or it screws up redraw of the pager
+	footerHeight               = 2
+	useHighPerformanceRenderer = false // TODO: this doesnt work so hot right now
 
-	infoClearDuration = 4 * time.Second
+	infoClearDuration = 3 * time.Second
 )
 
 const (
@@ -155,12 +155,13 @@ func (m *Model) getHighlightedFileContents() string {
 }
 
 func (m *Model) updateViewportContents() {
-	//if m.page != m.pageDots.Page {
 	m.viewport.SetContent(m.getHighlightedFileContents())
-	m.viewport.YOffset = 0
-	m.viewport.YPosition = 0
-	m.page = m.pageDots.Page
-	//}
+	if m.page != m.pageDots.Page {
+		// TODO: stash scroll offsets for focused file so we can restore when paging back
+		m.viewport.YOffset = 0
+		m.viewport.YPosition = 0
+		m.page = m.pageDots.Page
+	}
 }
 
 func (m *Model) SetInfo(info string) {
