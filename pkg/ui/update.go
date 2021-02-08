@@ -14,6 +14,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	cmds := []tea.Cmd{}
 	var lines []string // lines that change in viewport
 	viewportUpdated := false
+	forceCompile := false // whether we updated the model that should force recompilation
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -87,6 +88,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					m.SetInfo("Case insensitive matching " + yellowFg(en))
 					m.UpdatePrompt()
+					forceCompile = true
 				case tea.KeyCtrlL:
 					m.multiline = !m.multiline
 					en := greenFg("single line")
@@ -95,7 +97,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					m.SetInfo("Matching set to " + en)
 					m.UpdatePrompt()
-
+					forceCompile = true
 				case tea.KeyCtrlC:
 					return m, tea.Quit
 				case tea.KeyEsc:
@@ -128,7 +130,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// this handling needs to by synchronous because it modifies application state
 	// and we cannot defer this to a Cmd
-	shouldUpdate := m.HandleInput()
+	shouldUpdate := m.HandleInput(forceCompile)
 
 	if shouldUpdate || viewportUpdated {
 		m.updateViewportContents()
@@ -145,9 +147,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // mutates the content in the view if matches are found (for highlighting)
 // This should run as fast as possible with no changes, to avoid busy looping.
 // This should only compile regex/apply matches if input has changed
-func (m *Model) HandleInput() (shouldUpdate bool) {
+func (m *Model) HandleInput(forceCompile bool) (shouldUpdate bool) {
 	currentValue := m.textInput.Value()
-	if m.previousInput == currentValue {
+	if m.previousInput == currentValue && !forceCompile {
 		// skip compilation if no value change
 		return false
 	}
