@@ -35,11 +35,14 @@ const (
 )
 
 type Model struct {
-	ready           bool
-	focus           focusType
-	page            int
-	multiline       bool
-	caseInsensitive bool
+	ready bool
+	focus focusType
+	page  int
+
+	// regex flags: https://golang.org/pkg/regexp/syntax/
+	multiline       bool // m
+	caseInsensitive bool // i
+	spanline        bool // s
 
 	previousInput string
 	textInput     input.Model
@@ -83,7 +86,7 @@ func New(files []string) (*Model, error) {
 	textInput.Placeholder = "enter a regex (https://golang.org/pkg/regexp/syntax/)"
 	textInput.CharLimit = 156
 	textInput.Width = 50
-	textInput.Prompt = getPrompt(true, false, false)
+	textInput.Prompt = getPrompt(true, false, false, false)
 	textInput.Focus()
 
 	pageDots := paginator.NewModel()
@@ -102,15 +105,18 @@ func (m Model) Init() tea.Cmd {
 	return m.SetFocus(focusInput)
 }
 
-func getPrompt(focused, multiline, insensitive bool) string {
+func getPrompt(focused, multiline, spanline, insensitive bool) string {
 	// prefix prompt with our indicators for mode
 	modes := ""
 	if multiline {
 		modes += redFg("m")
-		modes += darkGrayFg("s")
 	} else {
 		modes += darkGrayFg("m")
+	}
+	if spanline {
 		modes += greenFg("s")
+	} else {
+		modes += darkGrayFg("s")
 	}
 	if insensitive {
 		modes += yellowFg("i")
@@ -127,7 +133,7 @@ func getPrompt(focused, multiline, insensitive bool) string {
 
 func (m *Model) SetFocus(f focusType) tea.Cmd {
 	m.focus = f
-	m.textInput.Prompt = getPrompt(m.focus == focusInput, m.multiline, m.caseInsensitive)
+	m.textInput.Prompt = getPrompt(m.focus == focusInput, m.multiline, m.spanline, m.caseInsensitive)
 
 	switch m.focus {
 	case focusInput:
@@ -171,7 +177,7 @@ func (m *Model) getHighlightedFileContents() string {
 					hl += m
 					rem = ""
 				default:
-					hl += splits[0] + highlightStyle(m)
+					hl += splits[0] + matchHighlightStyle(m)
 					rem = splits[1]
 				}
 			}

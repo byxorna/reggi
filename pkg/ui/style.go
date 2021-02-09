@@ -45,7 +45,8 @@ var (
 	redFg        = newFgStyle(lib.Red)
 	faintRedFg   = newFgStyle(lib.FaintRed)
 
-	highlightStyle = newStyle(lib.NewColorPair("#dddddd", "#1a1a1a"), lib.NewColorPair("#036B46", "#35D79C"), true)
+	matchHighlightStyle   = newStyle(lib.NewColorPair("#dddddd", "#1a1a1a"), lib.NewColorPair("#036B46", "#35D79C"), true)
+	captureHighlightStyle = newStyle(lib.NewColorPair("#dddddd", "#1a1a1a"), lib.Fuschia, true)
 )
 
 // Returns a termenv style with foreground and background options.

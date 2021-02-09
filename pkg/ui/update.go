@@ -82,20 +82,29 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				switch msg.Type {
 				case tea.KeyCtrlI:
 					m.caseInsensitive = !m.caseInsensitive
-					en := "enabled"
-					if !m.caseInsensitive {
-						en = "disabled"
+					en := darkGrayFg("disabled")
+					if m.caseInsensitive {
+						en = yellowFg("enabled")
 					}
-					m.SetInfo("Case insensitive matching " + yellowFg(en))
+					m.SetInfo("Case insensitive matching " + en)
 					m.UpdatePrompt()
 					forceCompile = true
 				case tea.KeyCtrlL:
 					m.multiline = !m.multiline
-					en := greenFg("single line")
+					en := darkGrayFg("disabled")
 					if m.multiline {
-						en = redFg("multiline")
+						en = redFg("enabled")
 					}
-					m.SetInfo("Matching set to " + en)
+					m.SetInfo("Multi-line mode " + en + ": ^ and $ match begin/end line")
+					m.UpdatePrompt()
+					forceCompile = true
+				case tea.KeyCtrlS:
+					m.spanline = !m.spanline
+					en := darkGrayFg("disabled")
+					if m.spanline {
+						en = greenFg("enabled")
+					}
+					m.SetInfo("Span line " + en + ": let . match \\n")
 					m.UpdatePrompt()
 					forceCompile = true
 				case tea.KeyCtrlC:
@@ -163,7 +172,8 @@ func (m *Model) HandleInput(forceCompile bool) (shouldUpdate bool) {
 	flags := ""
 	if m.multiline {
 		flags += "m"
-	} else {
+	}
+	if m.spanline {
 		flags += "s"
 	}
 	if m.caseInsensitive {
@@ -177,7 +187,7 @@ func (m *Model) HandleInput(forceCompile bool) (shouldUpdate bool) {
 }
 
 func (m *Model) UpdatePrompt() {
-	m.textInput.Prompt = getPrompt(m.focus == focusInput, m.multiline, m.caseInsensitive)
+	m.textInput.Prompt = getPrompt(m.focus == focusInput, m.multiline, m.spanline, m.caseInsensitive)
 }
 
 func (m *Model) HandleUpdateTime() {

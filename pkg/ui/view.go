@@ -21,8 +21,9 @@ var (
 	}
 	inputHelp = []string{
 		`esc: pager`,
-		`ctrl+i: case`,
 		`ctrl+l: multiline`,
+		`ctrl+s: spanline`,
+		`ctrl+i: case`,
 		`ctrl+c: quit`,
 	}
 )
