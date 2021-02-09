@@ -189,7 +189,6 @@ func (m *Model) updateViewportContents() {
 	if m.page != m.pageDots.Page {
 		// TODO: stash scroll offsets for focused file so we can restore when paging back
 		m.viewport.YOffset = 0
-		m.viewport.YPosition = 0
 		m.page = m.pageDots.Page
 	}
 }

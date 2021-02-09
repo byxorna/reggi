@@ -79,7 +79,7 @@ func (m *Model) resizeViewport(width, height int) bool {
 func (m *Model) initializeViewport(width, height int) bool {
 	verticalMargins := headerHeight + footerHeight
 	m.viewport = viewport.Model{Width: width, Height: height - verticalMargins}
-	m.viewport.YPosition = headerHeight
+	m.viewport.YPosition = headerHeight + 1
 	m.viewport.HighPerformanceRendering = useHighPerformanceRenderer
 	m.viewport.SetContent(m.getHighlightedFileContents())
 	m.ready = true
