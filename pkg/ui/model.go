@@ -162,30 +162,30 @@ func (m *Model) getHighlightedFileContents() string {
 	highlightedText := ""
 	lmIdx := 0
 	for lineNum, line := range strings.SplitAfter(c, "\n") {
-		if len(m.lineMatches) > lmIdx && m.lineMatches[lmIdx].LineNum == lineNum {
-			lm := m.lineMatches[lmIdx]
-			lmIdx++
-			hl := ""
-			//hl += fmt.Sprintf("%+v\n", lm)
-			rem := line
-			for _, m := range lm.Matches {
-				splits := strings.SplitN(rem, m, 2)
-				switch len(splits) {
-				case 0:
-					hl += rem
-				case 1:
-					hl += m
-					rem = ""
-				default:
-					hl += splits[0] + matchHighlightStyle(m) + resetStyle("")
-					rem = splits[1]
-				}
-			}
-			highlightedText += hl + rem
-		} else {
+		if len(m.lineMatches) <= lmIdx || m.lineMatches[lmIdx].LineNum != lineNum {
 			// take line as is - no matches
 			highlightedText += line
+			continue
 		}
+		lm := m.lineMatches[lmIdx]
+		lmIdx++
+		hl := ""
+		//hl += fmt.Sprintf("%+v\n", lm)
+		rem := line
+		for _, m := range lm.Matches {
+			splits := strings.SplitN(rem, m, 2)
+			switch len(splits) {
+			case 0:
+				hl += rem
+			case 1:
+				hl += m
+				rem = ""
+			default:
+				hl += splits[0] + matchHighlightStyle(m) + resetStyle("")
+				rem = splits[1]
+			}
+		}
+		highlightedText += hl + rem
 	}
 	return highlightedText
 }

@@ -53,7 +53,7 @@ func (m *Model) formatLineSpread(left string, extraSpace int, right string) stri
 	if space < 1 {
 		space = 1
 	}
-	return fmt.Sprintf(`%s%s%s`, left, normalFg(strings.Repeat(" ", space)), right)
+	return fmt.Sprintf(`%s%s%s`, left, resetStyle(strings.Repeat(" ", space)), right)
 }
 
 func (m *Model) helpLine() string {
