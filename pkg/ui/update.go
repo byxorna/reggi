@@ -60,7 +60,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				case "up", "k":
 					viewportUpdated = true
-
+					lines = m.viewport.LineUp(1)
 					if m.viewport.HighPerformanceRendering {
 						cmds = append(cmds, viewport.ViewUp(m.viewport, lines))
 					}

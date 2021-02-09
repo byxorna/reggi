@@ -177,7 +177,7 @@ func (m *Model) getHighlightedFileContents() string {
 					hl += m
 					rem = ""
 				default:
-					hl += splits[0] + matchHighlightStyle(m)
+					hl += splits[0] + matchHighlightStyle(m) + resetStyle("")
 					rem = splits[1]
 				}
 			}
