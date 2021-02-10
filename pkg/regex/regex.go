@@ -1,14 +1,17 @@
 package regex
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 )
 
 type Capture struct {
-	Index   int
-	Name    string
-	Extract string
+	Index          int
+	ByteIndexStart int
+	ByteIndexEnd   int
+	Name           string
+	Extract        string
 }
 
 type LineMatches struct {
@@ -17,8 +20,8 @@ type LineMatches struct {
 	RawText string
 	// Coptures match the capture ID (number, or perl-style named capture)
 	// to the text capturing it
-	Captures []Capture
-	Matches  []string
+	ExpressionMatch Capture
+	Submatches      []Capture
 }
 
 // from https://golang.org/pkg/regexp/#Regexp.FindAllStringSubmatch
@@ -38,61 +41,37 @@ func ExtractMatches(re *regexp.Regexp, multiline bool, input string) []LineMatch
 	}
 	for lineNum, line := range inputsToMatch {
 		// TODO handle multiline
-		m := re.FindAllString(line, -1)
+		bytesLine := []byte(line)
+		m := re.FindSubmatchIndex(bytesLine)
+
 		if m == nil || len(m) == 0 {
 			// nil means no matches
 			continue
 		}
-		match := LineMatches{
-			LineNum: lineNum,
-			//RawText: line,
-			Matches: m,
+
+		lm := LineMatches{LineNum: lineNum}
+		for n := 0; n < len(m)/2; n++ {
+			if n == 0 {
+				expression := Capture{
+					Name:           fmt.Sprintf("%d", n),
+					ByteIndexStart: m[2*n],
+					ByteIndexEnd:   m[2*n+1],
+					Extract:        string(bytesLine[m[2*n]:m[2*n+1]]),
+				}
+				lm.ExpressionMatch = expression
+			} else {
+				submatch := Capture{
+					Name:           fmt.Sprintf("%d", n-1),
+					ByteIndexStart: m[2*n],
+					ByteIndexEnd:   m[2*n+1],
+					Extract:        string(bytesLine[m[2*n]:m[2*n+1]]),
+				}
+				lm.Submatches = append(lm.Submatches, submatch)
+			}
 		}
 
 		// TODO handle captures with capMatches := re.FindAllStringSubmatch(line, -1)
-		results = append(results, match)
+		results = append(results, lm)
 	}
 	return results
 }
-
-/*
-	// TODO handle multiline stuff
-	capMatches := re.FindAllStringSubmatchIndex(rawline, -1)
-	// TODO: bytesbuffer would be snappier
-	line := ""
-
-	var prevHighlight *HighlightID
-	var currentHighlight *HighlightID
-	for n := 0; n < len(rawline); n++ {
-		prevHighlight = currentHighlight
-		currentHighlight = nil
-		for matchID, match := range capMatches {
-			for i := 0; i < len(match)/2; i++ {
-				if n >= match[i] && n < match[i+1] {
-					currentHighlight = NewHighlightID(lineNo, matchID, i)
-					break
-				}
-			}
-			if currentHighlight != nil {
-				break
-			}
-		}
-
-		if prevHighlight != currentHighlight {
-			if currentHighlight != nil {
-				color := `blue` // normal highlights
-				if currentHighlight.IsCapture() {
-					color = `red`
-				}
-				line += fmt.Sprintf(`["%s"][%s]`, currentHighlight, color)
-				highlightids = append(highlightids, currentHighlight.String())
-			}
-			if currentHighlight == nil {
-				line += `[""][white]`
-			}
-		}
-		line += string(rawline[n])
-	}
-
-}
-*/

@@ -171,21 +171,29 @@ func (m *Model) getHighlightedFileContents() string {
 		lmIdx++
 		hl := ""
 		//hl += fmt.Sprintf("%+v\n", lm)
-		rem := line
-		for _, m := range lm.Matches {
-			splits := strings.SplitN(rem, m, 2)
-			switch len(splits) {
-			case 0:
-				hl += rem
-			case 1:
-				hl += m
-				rem = ""
-			default:
-				hl += splits[0] + matchHighlightStyle(m) + resetStyle("")
-				rem = splits[1]
-			}
-		}
-		highlightedText += hl + rem
+		bytesLine := []byte(line)
+		// highlight only the expression match
+		hl = string(bytesLine[0:lm.ExpressionMatch.ByteIndexStart]) +
+			matchHighlightStyle(string(bytesLine[lm.ExpressionMatch.ByteIndexStart:lm.ExpressionMatch.ByteIndexEnd])) +
+			string(bytesLine[lm.ExpressionMatch.ByteIndexEnd:len(bytesLine)])
+		highlightedText += hl
+		//
+		/*
+				for _, m := range lm.Matches {
+					splits := strings.SplitN(rem, m, 2)
+					switch len(splits) {
+					case 0:
+						hl += rem
+					case 1:
+						hl += m
+						rem = ""
+					default:
+						hl += splits[0] + matchHighlightStyle(m) + resetStyle("")
+						rem = splits[1]
+					}
+				}
+			highlightedText += hl + rem
+		*/
 	}
 	return highlightedText
 }
