@@ -89,6 +89,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.SetInfo("Case insensitive matching " + en)
 					m.UpdatePrompt()
 					forceCompile = true
+				case tea.KeyCtrlY:
+					m.matchall = !m.matchall
+					en := darkGrayFg("disabled")
+					if m.matchall {
+						en = yellowFg("enabled")
+					}
+					m.SetInfo("Match all expressions " + en)
+					m.UpdatePrompt()
+					forceCompile = true
 				case tea.KeyCtrlL:
 					m.multiline = !m.multiline
 					en := darkGrayFg("disabled")
@@ -187,7 +196,7 @@ func (m *Model) HandleInput(forceCompile bool) (shouldUpdate bool) {
 }
 
 func (m *Model) UpdatePrompt() {
-	m.textInput.Prompt = getPrompt(m.focus == focusInput, m.multiline, m.spanline, m.caseInsensitive)
+	m.textInput.Prompt = getPrompt(m.focus == focusInput, m.matchall, m.multiline, m.spanline, m.caseInsensitive)
 }
 
 func (m *Model) HandleUpdateTime() {

@@ -43,6 +43,7 @@ type Model struct {
 	multiline       bool // m
 	caseInsensitive bool // i
 	spanline        bool // s
+	matchall        bool // Whether to use `All` match functions
 
 	previousInput string
 	textInput     input.Model
@@ -55,8 +56,6 @@ type Model struct {
 	updateTime time.Time
 
 	inputFiles []*inputFile
-
-	lineMatches []regex.LineMatches
 }
 
 func New(files []string) (*Model, error) {
@@ -86,7 +85,7 @@ func New(files []string) (*Model, error) {
 	textInput.Placeholder = "enter a regex (https://golang.org/pkg/regexp/syntax/)"
 	textInput.CharLimit = 156
 	textInput.Width = 50
-	textInput.Prompt = getPrompt(true, false, false, false)
+	textInput.Prompt = getPrompt(true, false, false, false, false)
 	textInput.Focus()
 
 	pageDots := paginator.NewModel()
@@ -105,9 +104,14 @@ func (m Model) Init() tea.Cmd {
 	return m.SetFocus(focusInput)
 }
 
-func getPrompt(focused, multiline, spanline, insensitive bool) string {
+func getPrompt(focused, matchall, multiline, spanline, insensitive bool) string {
 	// prefix prompt with our indicators for mode
 	modes := ""
+	if matchall {
+		modes += yellowFg("a")
+	} else {
+		modes += darkGrayFg("a")
+	}
 	if multiline {
 		modes += redFg("m")
 	} else {
@@ -133,7 +137,7 @@ func getPrompt(focused, multiline, spanline, insensitive bool) string {
 
 func (m *Model) SetFocus(f focusType) tea.Cmd {
 	m.focus = f
-	m.textInput.Prompt = getPrompt(m.focus == focusInput, m.multiline, m.spanline, m.caseInsensitive)
+	m.textInput.Prompt = getPrompt(m.focus == focusInput, m.matchall, m.multiline, m.spanline, m.caseInsensitive)
 
 	switch m.focus {
 	case focusInput:
@@ -153,47 +157,39 @@ func (m *Model) focusedFile() *inputFile {
 
 func (m *Model) getHighlightedFileContents() string {
 	c := m.inputFiles[m.pageDots.Page].contents
-	m.lineMatches = regex.ExtractMatches(m.re, m.multiline, c)
-	if len(m.lineMatches) == 0 {
+	lineMatches := regex.ExtractMatches(m.re, m.multiline, m.matchall, c)
+	if len(lineMatches) == 0 {
 		return c
 	}
 
 	// highlight text and return that
 	highlightedText := ""
 	lmIdx := 0
-	for lineNum, line := range strings.SplitAfter(c, "\n") {
-		if len(m.lineMatches) <= lmIdx || m.lineMatches[lmIdx].LineNum != lineNum {
+
+	var chunksToMatch []string
+	if m.multiline || m.spanline {
+		chunksToMatch = []string{c}
+	} else {
+		chunksToMatch = strings.SplitAfter(c, "\n")
+	}
+
+	for lineNum, line := range chunksToMatch {
+		if len(lineMatches) <= lmIdx || lineMatches[lmIdx].LineNum != lineNum {
 			// take line as is - no matches
 			highlightedText += line
 			continue
 		}
-		lm := m.lineMatches[lmIdx]
+		lm := lineMatches[lmIdx]
 		lmIdx++
-		hl := ""
-		//hl += fmt.Sprintf("%+v\n", lm)
-		bytesLine := []byte(line)
-		// highlight only the expression match
-		hl = string(bytesLine[0:lm.ExpressionMatch.ByteIndexStart]) +
-			matchHighlightStyle(string(bytesLine[lm.ExpressionMatch.ByteIndexStart:lm.ExpressionMatch.ByteIndexEnd])) +
-			string(bytesLine[lm.ExpressionMatch.ByteIndexEnd:len(bytesLine)])
-		highlightedText += hl
-		//
-		/*
-				for _, m := range lm.Matches {
-					splits := strings.SplitN(rem, m, 2)
-					switch len(splits) {
-					case 0:
-						hl += rem
-					case 1:
-						hl += m
-						rem = ""
-					default:
-						hl += splits[0] + matchHighlightStyle(m) + resetStyle("")
-						rem = splits[1]
-					}
-				}
-			highlightedText += hl + rem
-		*/
+		var cursor int
+		for _, m := range lm.Expressions {
+			highlightedText += line[cursor:m.ByteIndexStart]                              // lead text, no style
+			highlightedText += matchHighlightStyle(line[m.ByteIndexStart:m.ByteIndexEnd]) // matching expression
+			cursor = m.ByteIndexEnd
+		}
+		if cursor != len(line) {
+			highlightedText += line[cursor:len(line)]
+		}
 	}
 	return highlightedText
 }
