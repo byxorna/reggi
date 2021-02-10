@@ -157,14 +157,9 @@ func (m *Model) focusedFile() *inputFile {
 
 func (m *Model) getHighlightedFileContents() string {
 	c := m.inputFiles[m.pageDots.Page].contents
-	lineMatches := regex.ExtractMatches(m.re, m.multiline, m.matchall, c)
-	if len(lineMatches) == 0 {
-		return c
-	}
 
 	// highlight text and return that
 	highlightedText := ""
-	lmIdx := 0
 
 	var chunksToMatch []string
 	if m.multiline || m.spanline {
@@ -173,16 +168,14 @@ func (m *Model) getHighlightedFileContents() string {
 		chunksToMatch = strings.SplitAfter(c, "\n")
 	}
 
-	for lineNum, line := range chunksToMatch {
-		if len(lineMatches) <= lmIdx || lineMatches[lmIdx].LineNum != lineNum {
-			// take line as is - no matches
+	for _, line := range chunksToMatch {
+		linematch := regex.ExtractMatches(m.re, m.matchall, line)
+		if linematch == nil {
 			highlightedText += line
 			continue
 		}
-		lm := lineMatches[lmIdx]
-		lmIdx++
 		var cursor int
-		for _, m := range lm.Expressions {
+		for _, m := range linematch.Expressions {
 			highlightedText += line[cursor:m.ByteIndexStart]                              // lead text, no style
 			highlightedText += matchHighlightStyle(line[m.ByteIndexStart:m.ByteIndexEnd]) // matching expression
 			cursor = m.ByteIndexEnd
