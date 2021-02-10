@@ -16,6 +16,4 @@ I use [rubular.com](rubular.com) constantly, and wanted to make something simila
 
 # TODO
 
-- [ ] fix splitting on the captured text instead of using the index of the matches (i.e. ctrl-s `me.$`)
-- [ ] implement different color captures
-- [ ] fix highlight capturing the newline with ctrl-s
+- [ ] implement different color for submatches vs matches
