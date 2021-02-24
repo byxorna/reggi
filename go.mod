@@ -1,4 +1,4 @@
-module github.com/byxorna/regtest
+module github.com/byxorna/reggi
 
 go 1.15
 

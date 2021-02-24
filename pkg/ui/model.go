@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/byxorna/regtest/pkg/regex"
+	"github.com/byxorna/reggi/pkg/regex"
 	"github.com/charmbracelet/bubbles/paginator"
 	input "github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"

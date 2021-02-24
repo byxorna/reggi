@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/byxorna/regtest/pkg/version"
+	"github.com/byxorna/reggi/pkg/version"
 	"github.com/charmbracelet/bubbles/viewport"
 	runewidth "github.com/mattn/go-runewidth"
 )

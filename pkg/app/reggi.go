@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/byxorna/regtest/pkg/ui"
-	"github.com/byxorna/regtest/pkg/version"
+	"github.com/byxorna/reggi/pkg/ui"
+	"github.com/byxorna/reggi/pkg/version"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 )

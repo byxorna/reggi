@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/byxorna/regtest/pkg/app"
+	"github.com/byxorna/reggi/pkg/app"
 )
 
 func main() {
