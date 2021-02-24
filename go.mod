@@ -12,5 +12,5 @@ require (
 	github.com/mattn/go-runewidth v0.0.10
 	github.com/muesli/termenv v0.7.4
 	github.com/rivo/tview v0.0.0-20210117162420-745e4ceeb711
-	github.com/spf13/cobra v1.1.1 // indirect
+	github.com/spf13/cobra v1.1.3 // indirect
 )
