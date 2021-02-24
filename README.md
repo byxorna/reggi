@@ -2,7 +2,11 @@
 
 Interactively validate regex against test data in your console
 
-![demo](./example1.png)
+![Example 1](./assets/example1.png)
+
+![Example 2](./assets/example2.png)
+
+![Example 3](./assets/example3.png)
 
 # Dev
 
@@ -17,3 +21,5 @@ I use [rubular.com](rubular.com) constantly, and wanted to make something simila
 # TODO
 
 - [ ] implement different color for submatches vs matches
+- [ ] implement a submatch expression explorer to visualise submatches as a tree
+
